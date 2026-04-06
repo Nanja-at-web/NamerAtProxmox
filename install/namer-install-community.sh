@@ -1,0 +1,145 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+export DEBIAN_FRONTEND=noninteractive
+MEDIA_ROOT="${MEDIA_ROOT:-/mnt/namer-share}"
+TZ_VALUE="${TZ_VALUE:-Europe/Berlin}"
+PUID_VALUE="${PUID_VALUE:-1000}"
+PGID_VALUE="${PGID_VALUE:-1000}"
+WEB_PORT="${WEB_PORT:-6980}"
+NAMER_PATH="/opt/namer"
+
+read -r -p "ThePornDB API token (leave empty to edit later in /opt/namer/config/namer.cfg): " TPDB_TOKEN
+read -r -p "Media root inside this container [${MEDIA_ROOT}]: " MEDIA_ROOT_INPUT
+MEDIA_ROOT="${MEDIA_ROOT_INPUT:-$MEDIA_ROOT}"
+read -r -p "Timezone [${TZ_VALUE}]: " TZ_INPUT
+TZ_VALUE="${TZ_INPUT:-$TZ_VALUE}"
+read -r -p "PUID [${PUID_VALUE}]: " PUID_INPUT
+PUID_VALUE="${PUID_INPUT:-$PUID_VALUE}"
+read -r -p "PGID [${PGID_VALUE}]: " PGID_INPUT
+PGID_VALUE="${PGID_INPUT:-$PGID_VALUE}"
+read -r -p "Namer web port [${WEB_PORT}]: " WEB_PORT_INPUT
+WEB_PORT="${WEB_PORT_INPUT:-$WEB_PORT}"
+
+apt update
+apt install -y curl ca-certificates
+
+if ! command -v docker >/dev/null 2>&1; then
+  curl -fsSL https://get.docker.com | sh
+fi
+
+systemctl enable docker >/dev/null 2>&1 || true
+systemctl start docker >/dev/null 2>&1 || true
+
+mkdir -p "${MEDIA_ROOT}/watch" \
+         "${MEDIA_ROOT}/work" \
+         "${MEDIA_ROOT}/failed" \
+         "${MEDIA_ROOT}/DESTINATION" \
+         "${NAMER_PATH}/config"
+
+echo "${MEDIA_ROOT}" >/root/.namer-media-root
+
+cat > "${NAMER_PATH}/.env" <<EOF
+PUID=${PUID_VALUE}
+PGID=${PGID_VALUE}
+TZ=${TZ_VALUE}
+WEB_PORT=${WEB_PORT}
+MEDIA_ROOT=${MEDIA_ROOT}
+EOF
+
+cat > "${NAMER_PATH}/docker-compose.yml" <<'EOF'
+services:
+  namer:
+    container_name: namer
+    image: ghcr.io/theporndatabase/namer:latest
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      TZ: ${TZ}
+      NAMER_CONFIG: /config/namer.cfg
+    ports:
+      - "${WEB_PORT}:6980"
+    volumes:
+      - /opt/namer/config:/config
+      - ${MEDIA_ROOT}:/media
+    restart: unless-stopped
+EOF
+
+cat > "${NAMER_PATH}/config/namer.cfg" <<EOF
+[namer]
+porndb_token = ${TPDB_TOKEN}
+prefer_dir_name_if_available = True
+min_file_size = 300
+write_namer_log = False
+write_namer_failed_log = True
+target_extensions = mp4,mkv,avi,mov,flv
+update_permissions_ownership = False
+set_dir_permissions = 775
+set_file_permissions = 664
+set_uid =
+set_gid =
+inplace_name={full_site} - {date} - {name} [WEBDL-{resolution}].{ext}
+
+[Phash]
+search_phash = True
+send_phash = False
+use_alt_phash_tool = False
+use_gpu = False
+
+[metadata]
+write_nfo = False
+enabled_tagging = False
+enabled_poster = False
+image_format = png
+enable_metadataapi_genres = False
+default_genre = Adult
+mark_collected = False
+
+[duplicates]
+preserve_duplicates = True
+max_desired_resolutions = -1
+desired_codec = hevc, h264
+
+[watchdog]
+ignored_dir_regex = .*_UNPACK_.*
+del_other_files = False
+extra_sleep_time = 30
+queue_limit = 0
+queue_sleep_time = 5
+new_relative_path_name={full_site}/{full_site} - {date} - {name} [WEBDL-{resolution}].{ext}
+watch_dir = /media/watch
+work_dir = /media/work
+failed_dir = /media/failed
+dest_dir = /media/DESTINATION
+web = True
+port = 6980
+host = 0.0.0.0
+web_root =
+allow_delete_files = False
+add_columns_from_log = False
+add_complete_column = False
+debug = False
+manual_mode = False
+diagnose_errors = False
+
+[webhook]
+webhook_enabled = False
+webhook_url =
+EOF
+
+cd "${NAMER_PATH}"
+docker compose --env-file "${NAMER_PATH}/.env" -f "${NAMER_PATH}/docker-compose.yml" pull
+docker compose --env-file "${NAMER_PATH}/.env" -f "${NAMER_PATH}/docker-compose.yml" up -d
+
+IP_ADDR=$(hostname -I | awk '{print $1}')
+cat >/etc/motd <<EOF
+Namer is installed.
+
+Web UI: http://${IP_ADDR}:${WEB_PORT}
+Media root inside this CT: ${MEDIA_ROOT}
+
+If you are using a Proxmox host bind mount for your NAS share,
+map it to ${MEDIA_ROOT} so Namer can see /media/watch, /media/work, /media/failed and /media/DESTINATION.
+EOF
+
+echo "Namer installed successfully. Web UI: http://${IP_ADDR}:${WEB_PORT}"
