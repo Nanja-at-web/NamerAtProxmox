@@ -32,7 +32,7 @@ update_permissions_ownership = False
 
 Das reduziert Probleme mit Besitz- und Rechtemanipulationen auf bind-gemounteten NAS-Pfaden.
 
-## Empfohlene Reihenfolge
+## Aktuell empfohlene Reihenfolge
 
 ### 1. NFS auf dem Proxmox-Host mounten
 
@@ -53,24 +53,58 @@ Darunter sollten später diese Ordner vorhanden sein:
 
 ### 2. LXC vom Proxmox-Host aus erstellen
 
-Nutze dieses Script direkt in der Proxmox-Shell:
+Nutze jetzt bevorzugt dieses Script direkt in der Proxmox-Shell:
 
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/main/ct/namer-lxc.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/main/ct/namer-fixed.sh)"
 ```
+
+Dieses Skript ist auf das Community-Scripts-Framework aufgebaut und zeigt beim Start das bekannte Menü mit:
+
+- **Default Install**
+- **Advanced Install**
+- **User Defaults**
+- **Settings**
+
+Damit werden typische CT-Werte wie diese über das Menü gesetzt und nicht mehr direkt per `read -p` abgefragt:
+
+- CT ID
+- Hostname
+- CPU
+- RAM
+- Disk
+- Unprivileged / Privileged
+- Nesting
+- Keyctl
+- Netzwerk
+- Storage
 
 Das Script:
 
 - erstellt einen unprivilegierten Debian-LXC
-- aktiviert `nesting=1,keyctl=1`
-- bindet den Host-Pfad per `mp0` in den LXC ein
-- installiert Docker im LXC
-- erzeugt `docker-compose.yml` und `namer.cfg`
-- startet Namer
+- aktiviert die typischen Docker-LXC-Funktionen über die Community-Scripts-Logik
+- führt anschließend den Namer-Installer im Container aus
+- startet Docker und Namer im Container
 
-### 3. Optional: standalone im Container ausführen
+### 3. App-Installation im Container
 
-Falls du einen LXC schon hast, kannst du direkt im Container das standalone Script nutzen:
+Für den Community-Scripts-artigen Ablauf gibt es jetzt zusätzlich diesen Installer:
+
+```text
+install/namer-install-community.sh
+```
+
+Er richtet im Container ein:
+
+- Docker
+- `/opt/namer/.env`
+- `/opt/namer/docker-compose.yml`
+- `/opt/namer/config/namer.cfg`
+- die Verzeichnisse unterhalb des Media-Roots
+
+### 4. Bereits vorhandene standalone Variante
+
+Falls du einen LXC schon hast, kannst du weiterhin direkt im Container das standalone Script nutzen:
 
 ```bash
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/main/install/namer-install-standalone.sh)"
@@ -111,13 +145,47 @@ failed_dir = /media/failed
 dest_dir = /media/DESTINATION
 ```
 
+## Empfohlene LXC-Einstellungen
+
+Für Namer im Docker-LXC sind typischerweise diese Werte sinnvoll:
+
+- **Container Type:** Unprivileged
+- **Nesting:** Yes
+- **Keyctl:** Yes
+- **Mknod:** No
+- **Allow specific filesystem mounts:** No
+- **Verbose mode:** No
+
+## Unterschied zwischen alter und neuer CT-Variante
+
+### Ältere manuelle Variante
+
+```text
+ct/namer-lxc.sh
+```
+
+Diese Variante fragt viele Werte per Shell ab und verhält sich nicht wie ein typisches Community-Script.
+
+### Neue empfohlene Variante
+
+```text
+ct/namer-fixed.sh
+```
+
+Diese Version trennt sauber zwischen:
+
+- **Container-Erstellung über das Community-Scripts-Menü**
+- **Namer-Installation im Container**
+
+Dadurch entspricht die Bedienung deutlich stärker dem Modell von `StashAtProxmox`.
+
 ## Spätere gemeinsame Systemlösung mit StashApp
 
 Empfohlenes Zielmodell:
 
 - ein Host-seitiges NAS-Mount-Konzept
 - pro Anwendung ein eigener Docker-LXC
-- jede Anwendung mit eigenem standalone Installer im Container
+- jede Anwendung mit eigenem Installer im Container
 - gleiche Verzeichnislogik und gleiche Proxmox-Bind-Mount-Strategie
 
 So bleiben Namer und StashApp getrennt betreibbar, können später aber in einer übergreifenden Systemlösung zusammengeführt werden.
