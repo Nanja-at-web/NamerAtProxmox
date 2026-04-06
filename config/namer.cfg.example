@@ -6,11 +6,15 @@ min_file_size = 300
 write_namer_log = False
 write_namer_failed_log = True
 target_extensions = mp4,mkv,avi,mov,flv
-update_permissions_ownership = True
+# Recommended for unprivileged LXC containers with NAS bind mounts.
+# Let the NAS / host keep ownership management instead of Namer.
+update_permissions_ownership = False
 set_dir_permissions = 775
 set_file_permissions = 664
-set_uid = 1000
-set_gid = 1000
+# Leave empty in the recommended Proxmox LXC + NAS setup unless you
+# explicitly want Namer to force ownership changes.
+set_uid =
+set_gid =
 inplace_name={full_site} - {date} - {name} [WEBDL-{resolution}].{ext}
 
 [Phash]
@@ -40,6 +44,7 @@ extra_sleep_time = 30
 queue_limit = 0
 queue_sleep_time = 5
 new_relative_path_name={full_site}/{full_site} - {date} - {name} [WEBDL-{resolution}].{ext}
+# Standard container paths for the current Docker setup.
 watch_dir = /media/watch
 work_dir = /media/work
 failed_dir = /media/failed
