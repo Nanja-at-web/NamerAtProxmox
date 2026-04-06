@@ -39,7 +39,7 @@ start
 build_container
 
 msg_info "Running Namer installer inside CT $CTID"
-if pct exec "$CTID" -- bash -lc 'bash -c "$(curl -fsSL https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/main/install/namer-install-standalone.sh)"'; then
+if pct exec "$CTID" -- bash -lc 'bash -c "$(curl -fsSL https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/main/install/namer-install-community.sh)"'; then
   msg_ok "Namer installed successfully in CT $CTID"
 else
   msg_error "Namer installer failed in CT $CTID"
