@@ -83,16 +83,18 @@ Das Script:
 
 - erstellt einen unprivilegierten Debian-LXC
 - aktiviert die typischen Docker-LXC-Funktionen über die Community-Scripts-Logik
-- führt anschließend den Namer-Installer im Container aus
+- startet danach automatisch den **Community-Installer** im Container
 - startet Docker und Namer im Container
 
-### 3. App-Installation im Container
+### 3. Automatisch gestarteter Installer im Container
 
-Für den Community-Scripts-artigen Ablauf gibt es jetzt zusätzlich diesen Installer:
+Für den Community-Scripts-artigen Ablauf ist jetzt dieser Installer zuständig:
 
 ```text
 install/namer-install-community.sh
 ```
+
+Er wird normalerweise **nicht manuell aufgerufen**, sondern von `ct/namer-fixed.sh` nach der CT-Erstellung automatisch im Container gestartet.
 
 Er richtet im Container ein:
 
@@ -102,13 +104,15 @@ Er richtet im Container ein:
 - `/opt/namer/config/namer.cfg`
 - die Verzeichnisse unterhalb des Media-Roots
 
-### 4. Bereits vorhandene standalone Variante
+### 4. Manuell ausführbare Direkt-Variante
 
 Falls du einen LXC schon hast, kannst du weiterhin direkt im Container das standalone Script nutzen:
 
 ```bash
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/main/install/namer-install-standalone.sh)"
 ```
+
+Diese Variante ist die **manuelle Direktinstallation** und nicht der automatisch vom CT-Launcher verwendete Standardweg.
 
 Standardpfad im Container:
 
@@ -175,7 +179,7 @@ ct/namer-fixed.sh
 Diese Version trennt sauber zwischen:
 
 - **Container-Erstellung über das Community-Scripts-Menü**
-- **Namer-Installation im Container**
+- **automatisch gestartetem Community-Installer im Container**
 
 Dadurch entspricht die Bedienung deutlich stärker dem Modell von `StashAtProxmox`.
 

@@ -56,25 +56,36 @@ Damit werden typische CT-Werte wie diese nicht mehr manuell per Shell abgefragt,
 
 ## Installer im Container
 
-Für die eigentliche Namer-Einrichtung im Container gibt es jetzt zwei Varianten.
+Für die eigentliche Namer-Einrichtung im Container gibt es jetzt zwei klar getrennte Varianten.
 
-### Empfohlen zusammen mit `ct/namer-fixed.sh`
+### 1. Automatisch durch `ct/namer-fixed.sh` gestarteter Installer
 
 - `install/namer-install-community.sh`
 
-Diese Variante ist für den Community-Scripts-artigen Ablauf gedacht.
+Diese Variante ist der **Standard-Installer für den Community-Scripts-Ablauf**.
+Sie wird **nicht normalerweise manuell gestartet**, sondern von `ct/namer-fixed.sh` nach der CT-Erstellung automatisch im Container ausgeführt.
 
-### Bereits vorhandene standalone Variante
+Aufgabe dieser Variante:
+
+- Docker im Container einrichten
+- `/opt/namer/.env` erzeugen
+- `/opt/namer/docker-compose.yml` erzeugen
+- `/opt/namer/config/namer.cfg` erzeugen
+- Namer im Container starten
+
+### 2. Manuell ausführbarer Direkt-Installer für bestehende Container
 
 - `install/namer-install-standalone.sh`
 
-Diese Variante bleibt weiterhin nutzbar, wenn du einen Container bereits hast und Namer direkt **im Container** einrichten willst.
+Diese Variante ist für den Fall gedacht, dass du **bereits einen vorhandenen Debian-LXC oder eine andere Linux-Umgebung** hast und Namer **bewusst direkt im Container** installieren möchtest.
 
 Start dafür:
 
 ```bash
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/main/install/namer-install-standalone.sh)"
 ```
+
+Diese Variante ist also die **manuelle Direktinstallation**, während `namer-install-community.sh` die **vom CT-Launcher vorgesehene Standardvariante** ist.
 
 ## Unterschied zwischen alter und neuer CT-Variante
 
@@ -102,7 +113,7 @@ Das funktioniert zwar, wirkt aber **nicht wie ein typisches Community-Script**.
 Diese Version verhält sich deutlich näher an den offiziellen Community-Scripts:
 
 - CT-Erstellung über das bekannte Menü
-- App-Installation anschließend im Container
+- automatische Weitergabe an den passenden Community-Installer im Container
 - klarere Trennung zwischen **Container-Erstellung** und **Anwendungs-Konfiguration**
 
 ## Wichtige Pfade
@@ -178,6 +189,7 @@ Nutzen, wenn du:
 - Namer neu auf Proxmox aufsetzen willst
 - die gewohnte Community-Scripts-Menüführung möchtest
 - CT-Werte bequem über **Default** oder **Advanced** setzen willst
+- den Installer im Container automatisch starten lassen willst
 
 ### `install/namer-install-standalone.sh`
 
@@ -186,6 +198,7 @@ Nutzen, wenn du:
 - bereits einen Debian-LXC oder eine andere Linux-Umgebung hast
 - Docker dort direkt für Namer einrichten willst
 - die App unabhängig vom CT-Ersteller testen möchtest
+- den Installer bewusst selbst im Container starten willst
 
 ## Doku im Repository
 
@@ -200,5 +213,5 @@ Der aktuelle empfohlene Weg für neue Installationen ist also:
 1. NAS auf dem Proxmox-Host mounten
 2. `ct/namer-fixed.sh` starten
 3. im Community-Scripts-Menü **Default** oder **Advanced Install** wählen
-4. Namer danach im Container über den Installer einrichten lassen
+4. den automatisch gestarteten Community-Installer im Container durchlaufen lassen
 5. Namer anschließend über die Weboberfläche auf Port `6980` nutzen
