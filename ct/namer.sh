@@ -15,6 +15,7 @@ var_version="${var_version:-13}"
 var_unprivileged="${var_unprivileged:-1}"
 
 header_info "$APP"
+base_settings
 variables
 color
 catch_errors
