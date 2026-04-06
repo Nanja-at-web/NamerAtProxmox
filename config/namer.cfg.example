@@ -1,0 +1,60 @@
+[namer]
+# Create your API token in ThePornDB and paste it here.
+porndb_token = REPLACE_WITH_TPDB_TOKEN
+prefer_dir_name_if_available = True
+min_file_size = 300
+write_namer_log = False
+write_namer_failed_log = True
+target_extensions = mp4,mkv,avi,mov,flv
+update_permissions_ownership = True
+set_dir_permissions = 775
+set_file_permissions = 664
+set_uid = 1000
+set_gid = 1000
+inplace_name={full_site} - {date} - {name} [WEBDL-{resolution}].{ext}
+
+[Phash]
+search_phash = True
+send_phash = False
+use_alt_phash_tool = False
+use_gpu = False
+
+[metadata]
+write_nfo = False
+enabled_tagging = False
+enabled_poster = False
+image_format = png
+enable_metadataapi_genres = False
+default_genre = Adult
+mark_collected = False
+
+[duplicates]
+preserve_duplicates = True
+max_desired_resolutions = -1
+desired_codec = hevc, h264
+
+[watchdog]
+ignored_dir_regex = .*_UNPACK_.*
+del_other_files = False
+extra_sleep_time = 30
+queue_limit = 0
+queue_sleep_time = 5
+new_relative_path_name={full_site}/{full_site} - {date} - {name} [WEBDL-{resolution}].{ext}
+watch_dir = /media/watch
+work_dir = /media/work
+failed_dir = /media/failed
+dest_dir = /media/DESTINATION
+web = True
+port = 6980
+host = 0.0.0.0
+web_root =
+allow_delete_files = False
+add_columns_from_log = False
+add_complete_column = False
+debug = False
+manual_mode = False
+diagnose_errors = False
+
+[webhook]
+webhook_enabled = False
+webhook_url =
