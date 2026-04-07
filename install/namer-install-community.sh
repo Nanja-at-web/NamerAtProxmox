@@ -1,28 +1,24 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -Eeuo pipefail
+
+trap 'echo "[ERROR] Community installer failed on line ${LINENO}." >&2' ERR
+
+if [[ ${EUID} -ne 0 ]]; then
+  echo "Please run this script as root inside the container." >&2
+  exit 1
+fi
 
 export DEBIAN_FRONTEND=noninteractive
-MEDIA_ROOT="${MEDIA_ROOT:-/mnt/namer-share}"
-TZ_VALUE="${TZ_VALUE:-Europe/Berlin}"
-PUID_VALUE="${PUID_VALUE:-1000}"
-PGID_VALUE="${PGID_VALUE:-1000}"
-WEB_PORT="${WEB_PORT:-6980}"
+MEDIA_ROOT="${NAMER_MEDIA_ROOT:-/mnt/namer-share}"
+TPDB_TOKEN="${NAMER_TPDB_TOKEN:-REPLACE_WITH_TPDB_TOKEN}"
+TZ_VALUE="${TZ:-Europe/Berlin}"
+PUID_VALUE="${PUID:-1000}"
+PGID_VALUE="${PGID:-1000}"
+WEB_PORT="${NAMER_WEB_PORT:-6980}"
 NAMER_PATH="/opt/namer"
 
-read -r -p "ThePornDB API token (leave empty to edit later in /opt/namer/config/namer.cfg): " TPDB_TOKEN
-read -r -p "Media root inside this container [${MEDIA_ROOT}]: " MEDIA_ROOT_INPUT
-MEDIA_ROOT="${MEDIA_ROOT_INPUT:-$MEDIA_ROOT}"
-read -r -p "Timezone [${TZ_VALUE}]: " TZ_INPUT
-TZ_VALUE="${TZ_INPUT:-$TZ_VALUE}"
-read -r -p "PUID [${PUID_VALUE}]: " PUID_INPUT
-PUID_VALUE="${PUID_INPUT:-$PUID_VALUE}"
-read -r -p "PGID [${PGID_VALUE}]: " PGID_INPUT
-PGID_VALUE="${PGID_INPUT:-$PGID_VALUE}"
-read -r -p "Namer web port [${WEB_PORT}]: " WEB_PORT_INPUT
-WEB_PORT="${WEB_PORT_INPUT:-$WEB_PORT}"
-
-apt update
-apt install -y curl ca-certificates
+apt-get update
+apt-get install -y curl ca-certificates
 
 if ! command -v docker >/dev/null 2>&1; then
   curl -fsSL https://get.docker.com | sh
@@ -140,6 +136,9 @@ Media root inside this CT: ${MEDIA_ROOT}
 
 If you are using a Proxmox host bind mount for your NAS share,
 map it to ${MEDIA_ROOT} so Namer can see /media/watch, /media/work, /media/failed and /media/DESTINATION.
+
+If needed, edit /opt/namer/config/namer.cfg and set a valid ThePornDB token.
 EOF
 
 echo "Namer installed successfully. Web UI: http://${IP_ADDR}:${WEB_PORT}"
+echo "If needed, edit /opt/namer/config/namer.cfg and set a valid ThePornDB token."
