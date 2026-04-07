@@ -52,6 +52,25 @@ EOF
   fi
 }
 
+run_internal_namer_installer() {
+  local target_ctid="$1"
+  pct exec "$target_ctid" -- env \
+    NAMER_MEDIA_ROOT=/mnt/namer-share \
+    NAMER_WEB_PORT=6980 \
+    bash -lc 'bash -c "$(curl -fsSL https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/main/install/namer-install-community.sh)"'
+}
+
+lxc-attach() {
+  if [[ "$#" -ge 6 ]] && [[ "$1" == "-n" ]] && [[ "$3" == "--" ]] && [[ "$4" == "bash" ]] && [[ "$5" == "-c" ]]; then
+    local cmd_string="${6:-}"
+    if [[ "$cmd_string" == *"raw.githubusercontent.com/community-scripts/ProxmoxVE/main/install/${var_install}.sh"* ]]; then
+      run_internal_namer_installer "$2"
+      return $?
+    fi
+  fi
+  command lxc-attach "$@"
+}
+
 function update_script() {
   header_info
   check_container_storage
@@ -72,14 +91,6 @@ ensure_namer_app_defaults_file
 start
 build_container
 
-msg_info "Running Namer community installer inside CT $CTID"
-if pct exec "$CTID" -- env NAMER_MEDIA_ROOT=/mnt/namer-share NAMER_WEB_PORT=6980 bash -lc 'bash -c "$(curl -fsSL https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/main/install/namer-install-community.sh)"'; then
-  msg_ok "Namer community installer finished in CT $CTID"
-else
-  msg_error "Namer community installer failed in CT $CTID"
-  exit 1
-fi
-
 description
 msg_ok "Completed successfully!\n"
 echo -e "${CREATING}${GN}${APP} setup has been successfully initialized!${CL}"
@@ -92,6 +103,3 @@ echo -e "${TAB}${BGN}watch${CL}"
 echo -e "${TAB}${BGN}work${CL}"
 echo -e "${TAB}${BGN}failed${CL}"
 echo -e "${TAB}${BGN}DESTINATION${CL}"
-echo -e "${INFO}${YW} Important:${CL}"
-echo -e "${TAB}${BGN}The Community-Scripts core still probes its own install/namer-install.sh path first.${CL}"
-echo -e "${TAB}${BGN}If you see one curl 404 before the custom installer runs, that comes from build.func logic.${CL}"
