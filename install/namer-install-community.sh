@@ -10,7 +10,7 @@ fi
 
 export DEBIAN_FRONTEND=noninteractive
 MEDIA_ROOT="${NAMER_MEDIA_ROOT:-/mnt/namer-share}"
-TPDB_TOKEN="${NAMER_TPDB_TOKEN:-REPLACE_WITH_TPDB_TOKEN}"
+TPDB_TOKEN="${NAMER_TPDB_TOKEN:-}"
 TZ_VALUE="${TZ:-Europe/Berlin}"
 PUID_VALUE="${PUID:-1000}"
 PGID_VALUE="${PGID:-1000}"
@@ -23,6 +23,17 @@ WEB_PORT="${NAMER_WEB_PORT:-6980}"
 WEB_HOST="${NAMER_WEB_HOST:-0.0.0.0}"
 UPDATE_PERMS="${NAMER_UPDATE_PERMISSIONS_OWNERSHIP:-False}"
 NAMER_PATH="/opt/namer"
+
+if [[ -z "$TPDB_TOKEN" ]]; then
+  echo
+  read -r -s -p "ThePornDB API token: " TPDB_TOKEN
+  echo
+fi
+
+if [[ -z "$TPDB_TOKEN" ]]; then
+  echo "ERROR: ThePornDB API token must not be empty." >&2
+  exit 1
+fi
 
 apt-get update
 apt-get install -y curl ca-certificates
@@ -134,4 +145,12 @@ cd "${NAMER_PATH}"
 docker compose --env-file "${NAMER_PATH}/.env" -f "${NAMER_PATH}/docker-compose.yml" pull
 docker compose --env-file "${NAMER_PATH}/.env" -f "${NAMER_PATH}/docker-compose.yml" up -d
 
-echo "Namer installed successfully. Edit /opt/namer/config/namer.cfg and set a valid ThePornDB token."
+sleep 8
+if ! docker ps --format '{{.Names}}' | grep -qx 'namer'; then
+  echo "ERROR: Namer did not stay running. Check: docker logs namer" >&2
+  docker logs --tail 100 namer || true
+  exit 1
+fi
+
+IP_ADDR=$(hostname -I | awk '{print $1}')
+echo "Namer installed successfully. Web UI: http://${IP_ADDR}:${WEB_PORT}"
