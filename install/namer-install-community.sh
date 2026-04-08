@@ -26,6 +26,10 @@ NAMER_PATH="/opt/namer"
 
 if [[ -z "$TPDB_TOKEN" ]]; then
   echo
+  echo "Namer requires a valid ThePornDB API token to start."
+  echo "Please paste the token now."
+  echo "The input is hidden, so no characters will be shown while typing."
+  echo
   read -r -s -p "ThePornDB API token: " TPDB_TOKEN
   echo
 fi
@@ -34,6 +38,8 @@ if [[ -z "$TPDB_TOKEN" ]]; then
   echo "ERROR: ThePornDB API token must not be empty." >&2
   exit 1
 fi
+
+echo "Token received. Continuing with Namer configuration."
 
 apt-get update
 apt-get install -y curl ca-certificates
