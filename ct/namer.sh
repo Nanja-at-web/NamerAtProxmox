@@ -15,9 +15,42 @@ var_version="${var_version:-13}"
 var_unprivileged="${var_unprivileged:-1}"
 
 header_info "$APP"
+base_settings
 variables
 color
 catch_errors
+
+ensure_namer_app_defaults_file() {
+  local defaults_dir="/usr/local/community-scripts/defaults"
+  local defaults_file="${defaults_dir}/namer.vars"
+
+  mkdir -p "$defaults_dir"
+  if [[ ! -f "$defaults_file" ]]; then
+    cat > "$defaults_file" <<'EOF'
+# App-specific defaults for Namer
+var_cpu=2
+var_ram=2048
+var_disk=8
+var_os=debian
+var_version=13
+var_unprivileged=1
+var_tags=media;docker
+var_nesting=1
+var_keyctl=1
+var_mknod=0
+var_fuse=no
+var_tun=no
+var_gpu=no
+var_verbose=no
+var_protection=no
+var_timezone=
+var_apt_cacher=no
+var_container_storage=
+var_template_storage=
+EOF
+    chmod 0644 "$defaults_file"
+  fi
+}
 
 function update_script() {
   header_info
@@ -35,11 +68,12 @@ function update_script() {
   exit
 }
 
+ensure_namer_app_defaults_file
 start
 build_container
 
-msg_info "Running Namer installer inside CT $CTID"
-if pct exec "$CTID" -- bash -lc 'bash -c "$(curl -fsSL https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/main/install/namer-install-standalone.sh)"'; then
+msg_info "Running Namer community installer inside CT $CTID"
+if pct exec "$CTID" -- env NAMER_MEDIA_ROOT=/mnt/namer-share NAMER_WEB_PORT=6980 bash -lc 'bash -c "$(curl -fsSL https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/main/install/namer-install-community.sh)"'; then
   msg_ok "Namer installed successfully in CT $CTID"
 else
   msg_error "Namer installer failed in CT $CTID"
