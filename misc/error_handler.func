@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Branch-local error_handler.func shim for the test branch.
+#
+# This is a staging step for the Variant-B migration:
+# - repository references are rewritten to this repository/branch
+# - a full local fork can replace this shim in the next steps
+
+source <(
+  curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/error_handler.func \
+    | sed \
+        -e 's#https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE#https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/test/nfs-v1-autark-installer/LICENSE#g' \
+        -e 's#https://github.com/community-scripts/ProxmoxVE#https://github.com/Nanja-at-web/NamerAtProxmox/tree/test/nfs-v1-autark-installer#g'
+)
