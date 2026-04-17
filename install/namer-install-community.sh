@@ -21,7 +21,7 @@ PGID_VALUE="${PGID:-1000}"
 WATCH_DIR="${NAMER_WATCH_DIR:-/media/watch}"
 WORK_DIR="${NAMER_WORK_DIR:-/media/work}"
 FAILED_DIR="${NAMER_FAILED_DIR:-/media/failed}"
-DEST_DIR="${NAMER_DEST_DIR:-/media/DESTINATION}"
+DEST_DIR="${NAMER_DEST_DIR:-/media/dest}"
 WEB_ENABLED="${NAMER_WEB_ENABLED:-True}"
 WEB_PORT="${NAMER_WEB_PORT:-6980}"
 WEB_HOST="${NAMER_WEB_HOST:-0.0.0.0}"
@@ -58,7 +58,7 @@ systemctl start docker >/dev/null 2>&1 || true
 mkdir -p "${MEDIA_ROOT}/watch" \
          "${MEDIA_ROOT}/work" \
          "${MEDIA_ROOT}/failed" \
-         "${MEDIA_ROOT}/DESTINATION" \
+         "${MEDIA_ROOT}/dest" \
          "${NAMER_PATH}/config"
 
 echo "${MEDIA_ROOT}" >/root/.namer-media-root
