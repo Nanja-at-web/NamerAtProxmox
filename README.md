@@ -50,7 +50,7 @@ Vor dem Test sollte gelten:
   - `watch`
   - `work`
   - `failed`
-  - `DESTINATION`
+  - `dest`
 - auf Proxmox wird ein freier Test-CT verwendet
 - für den ersten Test sollte **kein produktiver Container** verwendet werden
 
@@ -73,7 +73,7 @@ Verwende beim ersten Test am besten diese Werte:
   - `/mnt/bindmounts/qnap-namer-test`
 - `Container mount path [/mnt/namer-share]:`
   - `/mnt/namer-share`
-- `Create watch/work/failed/DESTINATION automatically? [true]:`
+- `Create watch/work/failed/dest automatically? [true]:`
   - `true`
 - `Write persistent /etc/fstab entry on Proxmox host? [false]:`
   - `false`
@@ -82,7 +82,7 @@ Verwende beim ersten Test am besten diese Werte:
 - `Additional NFS mount options [empty]:`
   - leer lassen beim ersten Test
 
-Danach folgt im Container die ThePornDB-Token-Abfrage:
+Danach folgt auf dem Proxmox-Host die ThePornDB-Token-Abfrage:
 
 - `ThePornDB API token:`
   - hier den gültigen Token einfügen
@@ -159,7 +159,7 @@ NAS -> Proxmox Host Mount -> LXC Bind Mount -> Docker Bind Mount -> /media
 watch_dir = /media/watch
 work_dir = /media/work
 failed_dir = /media/failed
-dest_dir = /media/DESTINATION
+dest_dir = /media/dest
 ```
 
 ## Hinweis zu Rechten
