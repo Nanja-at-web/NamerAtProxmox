@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Branch-local build.func shim for the test branch.
+#
+# This is a staging step for the Variant-B migration:
+# - functional fetch URLs are rewritten to this repository/branch
+# - ct/namer.sh will be switched to this path after the related misc files exist
+# - a hook-enabled full local fork can replace this shim in the next steps
+
+source <(
+  curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/build.func \
+    | sed \
+        -e 's#https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/api.func#https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/test/nfs-v1-autark-installer/misc/api.func#g' \
+        -e 's#https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/core.func#https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/test/nfs-v1-autark-installer/misc/core.func#g' \
+        -e 's#https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/error_handler.func#https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/test/nfs-v1-autark-installer/misc/error_handler.func#g' \
+        -e 's#https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/tools.func#https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/test/nfs-v1-autark-installer/misc/tools.func#g' \
+        -e 's#https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/alpine-install.func#https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/test/nfs-v1-autark-installer/misc/alpine-install.func#g' \
+        -e 's#https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/install.func#https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/test/nfs-v1-autark-installer/misc/install.func#g' \
+        -e 's#https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/install/${var_install}.sh#https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/test/nfs-v1-autark-installer/install/${var_install}.sh#g'
+)
