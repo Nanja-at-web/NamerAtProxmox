@@ -3,17 +3,21 @@
 #
 # This is a staging step for the Variant-B migration:
 # - functional fetch URLs are rewritten to this repository/branch
-# - ct/namer.sh will be switched to this path after the related misc files exist
-# - a hook-enabled full local fork can replace this shim in the next steps
+# - a branch-local pre_install_hook can run before the native installer
+# - a full local fork can replace this wrapper in the next steps
 
-source <(
-  curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/build.func \
-    | sed \
-        -e 's#https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/api.func#https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/test/nfs-v1-autark-installer/misc/api.func#g' \
-        -e 's#https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/core.func#https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/test/nfs-v1-autark-installer/misc/core.func#g' \
-        -e 's#https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/error_handler.func#https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/test/nfs-v1-autark-installer/misc/error_handler.func#g' \
-        -e 's#https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/tools.func#https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/test/nfs-v1-autark-installer/misc/tools.func#g' \
-        -e 's#https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/alpine-install.func#https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/test/nfs-v1-autark-installer/misc/alpine-install.func#g' \
-        -e 's#https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/install.func#https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/test/nfs-v1-autark-installer/misc/install.func#g' \
-        -e 's#https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/install/${var_install}.sh#https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/test/nfs-v1-autark-installer/install/${var_install}.sh#g'
-)
+_upstream_build_func="$(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/build.func)"
+
+_hook_marker='    # Start timer for duration tracking'
+_hook_block=$'    if [[ $install_exit_code -eq 0 ]] && declare -f pre_install_hook >/dev/null 2>&1; then\n      msg_info "Running pre-install hook"\n      if pre_install_hook; then\n        msg_ok "Pre-install hook completed"\n      else\n        install_exit_code=$?\n        [[ $install_exit_code -eq 0 ]] && install_exit_code=1\n        msg_error "pre_install_hook failed (exit code: ${install_exit_code})"\n      fi\n    fi\n\n    # Start timer for duration tracking'
+
+_upstream_build_func="${_upstream_build_func//https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/api.func/https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/test/nfs-v1-autark-installer/misc/api.func}"
+_upstream_build_func="${_upstream_build_func//https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/core.func/https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/test/nfs-v1-autark-installer/misc/core.func}"
+_upstream_build_func="${_upstream_build_func//https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/error_handler.func/https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/test/nfs-v1-autark-installer/misc/error_handler.func}"
+_upstream_build_func="${_upstream_build_func//https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/tools.func/https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/test/nfs-v1-autark-installer/misc/tools.func}"
+_upstream_build_func="${_upstream_build_func//https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/alpine-install.func/https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/test/nfs-v1-autark-installer/misc/alpine-install.func}"
+_upstream_build_func="${_upstream_build_func//https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/install.func/https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/test/nfs-v1-autark-installer/misc/install.func}"
+_upstream_build_func="${_upstream_build_func//https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/install/\${var_install}.sh/https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/test/nfs-v1-autark-installer/install/\${var_install}.sh}"
+_upstream_build_func="${_upstream_build_func//$_hook_marker/$_hook_block}"
+
+source /dev/stdin <<<"$_upstream_build_func"
