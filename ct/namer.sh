@@ -65,9 +65,11 @@ ask_mount_settings() {
 
   read -r -p "Host mount path [/mnt/bindmounts/qnap-namer]: " HOST_MOUNT
   HOST_MOUNT="${HOST_MOUNT:-/mnt/bindmounts/qnap-namer}"
+  [[ "$HOST_MOUNT" = /* ]] || { msg_error "Host mount path must be an absolute path"; exit 1; }
 
   read -r -p "Container mount path [/mnt/namer-share]: " CT_MOUNT
   CT_MOUNT="${CT_MOUNT:-/mnt/namer-share}"
+  [[ "$CT_MOUNT" = /* ]] || { msg_error "Container mount path must be an absolute path"; exit 1; }
 
   read -r -p "Create watch/work/failed/DESTINATION automatically? [true]: " AUTO_CREATE_DIRS
   AUTO_CREATE_DIRS="${AUTO_CREATE_DIRS:-true}"
@@ -80,6 +82,23 @@ ask_mount_settings() {
 
   read -r -p "Additional NFS mount options [empty]: " NFS_OPTIONS
   NFS_OPTIONS="${NFS_OPTIONS:-}"
+}
+
+ask_tpdb_token() {
+  echo
+  echo "Namer requires a valid ThePornDB API token to start."
+  echo "Please paste the token now."
+  echo "The input is hidden, so no characters will be shown while typing."
+  echo
+  read -r -s -p "ThePornDB API token: " TPDB_TOKEN
+  echo
+
+  if [[ -z "${TPDB_TOKEN:-}" ]]; then
+    msg_error "ThePornDB API token must not be empty"
+    exit 1
+  fi
+
+  msg_ok "Token received"
 }
 
 ensure_nfs_client_tools() {
@@ -400,10 +419,12 @@ chmod +x /root/namer-install-community.sh'
 run_namer_installer() {
   write_ct_installer
   msg_info "Running embedded Namer installer inside CT $CTID"
-  if pct exec "$CTID" -- env NAMER_MEDIA_ROOT="$CT_MOUNT" NAMER_WEB_PORT=6980 bash -lc 'bash /root/namer-install-community.sh'
+  if pct exec "$CTID" -- env NAMER_MEDIA_ROOT="$CT_MOUNT" NAMER_WEB_PORT=6980 NAMER_TPDB_TOKEN="$TPDB_TOKEN" bash -lc 'bash /root/namer-install-community.sh'
   then
     msg_ok "Namer installed successfully in CT $CTID"
+    unset TPDB_TOKEN
   else
+    unset TPDB_TOKEN
     msg_error "Namer installer failed in CT $CTID"
     exit 1
   fi
@@ -428,6 +449,7 @@ function update_script() {
 main() {
   ensure_namer_app_defaults_file
   ask_mount_settings
+  ask_tpdb_token
   run_host_mount_setup
 
   start
