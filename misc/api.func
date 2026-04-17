@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Branch-local api.func shim for the test branch.
+#
+# This is a staging step for the Variant-B migration:
+# - repository references are rewritten to this repository/branch where applicable
+# - a full local fork can replace this shim in the next steps
+
+source <(
+  curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/api.func \
+    | sed \
+        -e 's#https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/LICENSE#https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/test/nfs-v1-autark-installer/LICENSE#g' \
+        -e 's#community-scripts/ProxmoxVE#Nanja-at-web/NamerAtProxmox#g' \
+        -e 's#community-scripts/ProxmoxVED#Nanja-at-web/NamerAtProxmox#g'
+)
