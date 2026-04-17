@@ -71,7 +71,7 @@ ask_mount_settings() {
   CT_MOUNT="${CT_MOUNT:-/mnt/namer-share}"
   [[ "$CT_MOUNT" = /* ]] || { msg_error "Container mount path must be an absolute path"; exit 1; }
 
-  read -r -p "Create watch/work/failed/DESTINATION automatically? [true]: " AUTO_CREATE_DIRS
+  read -r -p "Create watch/work/failed/dest automatically? [true]: " AUTO_CREATE_DIRS
   AUTO_CREATE_DIRS="${AUTO_CREATE_DIRS:-true}"
 
   read -r -p "Write persistent /etc/fstab entry on Proxmox host? [false]: " WRITE_FSTAB
@@ -138,12 +138,13 @@ run_host_mount_setup() {
   fi
 
   if [[ "$AUTO_CREATE_DIRS" == "true" ]]; then
-    msg_info "Creating required Namer directories on mounted share"
+    msg_info "Ensuring required Namer directories exist on mounted share"
+    msg_info "Existing NAS directories are reused. Nothing is deleted."
     mkdir -p \
       "$HOST_MOUNT/watch" \
       "$HOST_MOUNT/work" \
       "$HOST_MOUNT/failed" \
-      "$HOST_MOUNT/DESTINATION"
+      "$HOST_MOUNT/dest"
   fi
 
   if [[ "$WRITE_FSTAB" == "true" ]]; then
@@ -181,7 +182,7 @@ run_host_mount_check() {
   msg_info "Checking host mount"
   mountpoint -q "$HOST_MOUNT" || { msg_error "Host mount is not active: $HOST_MOUNT"; exit 1; }
 
-  for d in watch work failed DESTINATION; do
+  for d in watch work failed dest; do
     [[ -d "$HOST_MOUNT/$d" ]] || { msg_error "Missing directory on host mount: $HOST_MOUNT/$d"; exit 1; }
   done
 
@@ -191,7 +192,7 @@ run_host_mount_check() {
     exit 1
   }
 
-  for d in watch work failed DESTINATION; do
+  for d in watch work failed dest; do
     pct exec "$CTID" -- test -d "$CT_MOUNT/$d" || {
       msg_error "Missing directory inside CT: $CT_MOUNT/$d"
       exit 1
@@ -199,7 +200,7 @@ run_host_mount_check() {
   done
 
   if [[ "$RUN_WRITE_TEST" == "true" ]]; then
-    msg_info "Running write test"
+    msg_info "Running write test with a temporary file only"
     local test_file_host="$HOST_MOUNT/watch/.namer_mount_test_$$"
     local test_file_ct="$CT_MOUNT/watch/.namer_mount_test_$$"
 
@@ -248,7 +249,7 @@ PGID_VALUE="${PGID:-1000}"
 WATCH_DIR="${NAMER_WATCH_DIR:-/media/watch}"
 WORK_DIR="${NAMER_WORK_DIR:-/media/work}"
 FAILED_DIR="${NAMER_FAILED_DIR:-/media/failed}"
-DEST_DIR="${NAMER_DEST_DIR:-/media/DESTINATION}"
+DEST_DIR="${NAMER_DEST_DIR:-/media/dest}"
 WEB_ENABLED="${NAMER_WEB_ENABLED:-True}"
 WEB_PORT="${NAMER_WEB_PORT:-6980}"
 WEB_HOST="${NAMER_WEB_HOST:-0.0.0.0}"
@@ -285,7 +286,7 @@ systemctl start docker >/dev/null 2>&1 || true
 mkdir -p "${MEDIA_ROOT}/watch" \
          "${MEDIA_ROOT}/work" \
          "${MEDIA_ROOT}/failed" \
-         "${MEDIA_ROOT}/DESTINATION" \
+         "${MEDIA_ROOT}/dest" \
          "${NAMER_PATH}/config"
 
 echo "${MEDIA_ROOT}" >/root/.namer-media-root
@@ -474,7 +475,7 @@ main() {
   echo -e "${TAB}${BGN}watch${CL}"
   echo -e "${TAB}${BGN}work${CL}"
   echo -e "${TAB}${BGN}failed${CL}"
-  echo -e "${TAB}${BGN}DESTINATION${CL}"
+  echo -e "${TAB}${BGN}dest${CL}"
   echo -e "${INFO}${YW} Namer config file:${CL}"
   echo -e "${TAB}${BGN}/opt/namer/config/namer.cfg${CL}"
 }
