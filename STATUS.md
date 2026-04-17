@@ -50,6 +50,29 @@ The installer is intended to:
 
 The optional write test should only create and remove a temporary test file.
 
+## curl 404 side effect
+
+A non-blocking `curl 404` still appears during CT creation.
+
+### Current likely cause
+
+The timing strongly suggests that this 404 comes from the Community-Scripts `build.func` install phase and not from the custom embedded Namer installer.
+
+Reasoning:
+
+- the message appears right after `Customized LXC Container`
+- this matches known Community-Scripts issue patterns where `build.func` performs an internal install fetch using `lxc-attach ... curl ... install/${var_install}.sh`
+- the branch then continues successfully with the custom bind-mount and embedded installer flow, which shows that the actual Namer installation path is separate
+
+### Likely fix direction
+
+One of these approaches is still needed:
+
+1. fully own the `build.func` and related install URL chain for this repository and branch
+2. bypass the automatic `build.func` install phase so only the custom embedded installer path is used
+
+Until one of those is implemented, the 404 should be treated as expected noise and not as the real installation failure source.
+
 ## Merge readiness
 
 Not yet merge-ready.
