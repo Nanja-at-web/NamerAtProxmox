@@ -22,6 +22,18 @@ Dieser Installer nutzt das Community-Scripts-Framework und zeigt das bekannte Me
 - `App Defaults for Namer`
 - `Settings`
 
+## Repository-native Planungsdokumente
+
+Damit das Projekt auch ohne alte Chat-Anhänge oder abgelaufene Uploads verständlich bleibt, ist der aktuelle technische Zielzustand direkt im Repo dokumentiert.
+
+Wichtige Dateien dafür:
+
+- `STATUS.md`
+- `CHANGELOG.md`
+- `docs/VARIANT_B_IMPLEMENTATION_PLAN.md`
+
+`docs/VARIANT_B_IMPLEMENTATION_PLAN.md` ist die technische Source of Truth für die laufende Variant-B-Migration auf dem Test-Branch.
+
 ## Test-Branch: autonomer NFS-v1-Installer
 
 Auf dem Test-Branch `test/nfs-v1-autark-installer` gibt es einen erweiterten Teststand mit:
@@ -177,4 +189,5 @@ Das reduziert Rechteprobleme auf bind-gemounteten NAS-Pfaden.
 - `README_LXC.md`
 - `docs/LXC_NFS_SETUP.md`
 - `docs/SHARED_SYSTEM_MODEL.md`
+- `docs/VARIANT_B_IMPLEMENTATION_PLAN.md`
 - `config/namer.cfg.example`
