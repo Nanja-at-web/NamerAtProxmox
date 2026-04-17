@@ -1,0 +1,35 @@
+# Local runtime and temp files
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
+
+# OS / editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Shell / test artifacts
+*.out
+*.err
+
+# Local mount configs with real NAS details
+config/mnt.cfg
+config/*.local.cfg
+
+# Optional local override files
+.env
+.env.local
+
+# Generated archives
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+
+# Python cache, if helper tooling is added later
+__pycache__/
+*.pyc
