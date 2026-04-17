@@ -2,9 +2,9 @@
 
 Namer auf Proxmox VE mit NAS-Freigabe im Community-Scripts-Stil.
 
-## Empfohlener Installer
+## Empfohlener Installer auf `main`
 
-Für neue Installationen ist jetzt der Community-Scripts-Installer empfohlen:
+Für neue Installationen auf `main` ist aktuell dieser Installer dokumentiert:
 
 - `ct/namer.sh`
 
@@ -21,6 +21,105 @@ Dieser Installer nutzt das Community-Scripts-Framework und zeigt das bekannte Me
 - `User Defaults`
 - `App Defaults for Namer`
 - `Settings`
+
+## Test-Branch: autonomer NFS-v1-Installer
+
+Auf dem Test-Branch `test/nfs-v1-autark-installer` gibt es einen erweiterten Teststand mit:
+
+- integriertem NFS-v1-Host-Mount
+- Bind-Mount in den LXC
+- eingebettetem CT-Installer
+- ThePornDB-Token-Abfrage
+- Docker-Healthcheck
+
+Start des Teststands:
+
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/test/nfs-v1-autark-installer/ct/namer.sh)"
+```
+
+## Konkreter Testplan für deine QNAP-NFS-Freigabe
+
+### Voraussetzungen
+
+Vor dem Test sollte gelten:
+
+- QNAP exportiert die NFS-Freigabe korrekt
+- Exportpfad ist `/namer`
+- in der Freigabe sind diese Ordner vorhanden oder dürfen automatisch erstellt werden:
+  - `watch`
+  - `work`
+  - `failed`
+  - `DESTINATION`
+- auf Proxmox wird ein freier Test-CT verwendet
+- für den ersten Test sollte **kein produktiver Container** verwendet werden
+
+### Startbefehl auf Proxmox
+
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/test/nfs-v1-autark-installer/ct/namer.sh)"
+```
+
+### Empfohlene Antworten während des Tests
+
+Verwende beim ersten Test am besten diese Werte:
+
+- `NAS host/IP:`
+  - **deine QNAP-IP**
+  - Beispiel: `192.168.1.50`
+- `NAS export path (example: /namer):`
+  - `/namer`
+- `Host mount path [/mnt/bindmounts/qnap-namer]:`
+  - `/mnt/bindmounts/qnap-namer-test`
+- `Container mount path [/mnt/namer-share]:`
+  - `/mnt/namer-share`
+- `Create watch/work/failed/DESTINATION automatically? [true]:`
+  - `true`
+- `Write persistent /etc/fstab entry on Proxmox host? [false]:`
+  - `false`
+- `Run optional write test after bind mount? [false]:`
+  - `true`
+- `Additional NFS mount options [empty]:`
+  - leer lassen beim ersten Test
+
+Danach folgt im Container die ThePornDB-Token-Abfrage:
+
+- `ThePornDB API token:`
+  - hier den gültigen Token einfügen
+  - die Eingabe bleibt verborgen
+
+### Warum diese Testwerte empfohlen sind
+
+Für den ersten Test ist diese Kombination am sichersten:
+
+- separater Host-Mountpfad: `/mnt/bindmounts/qnap-namer-test`
+- kein permanenter `/etc/fstab`-Eintrag
+- Write-Test aktiviert
+
+So wird geprüft:
+
+- NFS-Mount funktioniert
+- der LXC sieht den Bind-Mount
+- Lesen und Schreiben funktionieren
+- die Host-Boot-Konfiguration wird noch nicht dauerhaft verändert
+
+## Prüfen nach der Installation
+
+Nach erfolgreichem Lauf auf dem Proxmox-Host prüfen:
+
+```bash
+pct config <CTID>
+pct exec <CTID> -- bash -lc 'mount | grep namer-share || true'
+pct exec <CTID> -- bash -lc 'ls -lah /mnt/namer-share'
+pct exec <CTID> -- bash -lc 'docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"'
+pct exec <CTID> -- bash -lc 'docker logs --tail 100 namer'
+```
+
+Dann die Web-UI im Browser öffnen:
+
+```text
+http://<CT-IP>:6980
+```
 
 ## Alternative Host-Variante
 
