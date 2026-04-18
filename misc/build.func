@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+# Branch-local build.func loader for the test branch.
+#
+# Temporary stabilization step for the Variant-B migration:
+# - downloads upstream community-scripts build.func into a temporary local file
+# - rewrites the relevant fetch URLs to this repository/branch
+# - injects pre_install_hook support before the native installer stage
+# - uses file-based patching instead of source /dev/stdin string evaluation
+#
+# NOTE:
+# The long-term target remains a literal in-repo local copy of build.func.
+# This loader stays only until that full fork is committed.
+
+set -euo pipefail
+
+BUILD_FUNC_BRANCH="test/nfs-v1-autark-installer"
+BUILD_FUNC_REPO="Nanja-at-web/NamerAtProxmox"
+BUILD_FUNC_UPSTREAM_URL="https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/build.func"
+BUILD_FUNC_TMP="$(mktemp /tmp/namer-build-func.XXXXXX)"
+
+cleanup_build_func_tmp() {
+  rm -f "$BUILD_FUNC_TMP"
+}
+trap cleanup_build_func_tmp EXIT
+
+curl -fsSL "$BUILD_FUNC_UPSTREAM_URL" -o "$BUILD_FUNC_TMP"
+
+python3 - "$BUILD_FUNC_TMP" "$BUILD_FUNC_REPO" "$BUILD_FUNC_BRANCH" <<'PY'
+from pathlib import Path
+import sys
+
+build_path = Path(sys.argv[1])
+repo = sys.argv[2]
+branch = sys.argv[3]
+text = build_path.read_text(encoding="utf-8")
+
+replacements = {
+    "https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/api.func": f"https://raw.githubusercontent.com/{repo}/{branch}/misc/api.func",
+    "https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/core.func": f"https://raw.githubusercontent.com/{repo}/{branch}/misc/core.func",
+    "https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/error_handler.func": f"https://raw.githubusercontent.com/{repo}/{branch}/misc/error_handler.func",
+    "https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/tools.func": f"https://raw.githubusercontent.com/{repo}/{branch}/misc/tools.func",
+    "https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/alpine-install.func": f"https://raw.githubusercontent.com/{repo}/{branch}/misc/alpine-install.func",
+    "https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/install.func": f"https://raw.githubusercontent.com/{repo}/{branch}/misc/install.func",
+    "https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/install/${var_install}.sh": f"https://raw.githubusercontent.com/{repo}/{branch}/install/${{var_install}}.sh",
+}
+for old, new in replacements.items():
+    text = text.replace(old, new)
+
+needle = '''    # Install SSH keys\n    install_ssh_keys_into_ct\n\n    # Start timer for duration tracking\n'''
+replacement = '''    # Install SSH keys\n    install_ssh_keys_into_ct\n\n    if [[ $install_exit_code -eq 0 ]] && declare -f pre_install_hook >/dev/null 2>&1; then\n      msg_info "Running pre-install hook"\n      if pre_install_hook; then\n        msg_ok "Pre-install hook completed"\n      else\n        install_exit_code=$?\n        [[ $install_exit_code -eq 0 ]] && install_exit_code=1\n        msg_error "pre_install_hook failed (exit code: ${install_exit_code})"\n      fi\n    fi\n\n    # Start timer for duration tracking\n'''
+if needle not in text:
+    raise SystemExit("Hook injection point not found in build.func")
+text = text.replace(needle, replacement, 1)
+
+build_path.write_text(text, encoding="utf-8")
+PY
+
+source "$BUILD_FUNC_TMP"

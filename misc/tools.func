@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Branch-local tools.func shim for the test branch.
+#
+# This is a staging step for the Variant-B migration:
+# - this branch now provides the path expected by branch-local build/install shims
+# - a full local fork can replace this shim in the next steps
+
+source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/tools.func)

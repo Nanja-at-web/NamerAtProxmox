@@ -5,7 +5,7 @@
 # Source: https://github.com/ThePornDatabase/namer
 set -Eeuo pipefail
 
-trap 'echo "[ERROR] Installation failed on line ${LINENO}." >&2' ERR
+trap 'echo "[ERROR] Native Namer installer failed on line ${LINENO}." >&2' ERR
 
 if [[ ${EUID} -ne 0 ]]; then
   echo "Please run this script as root inside the container." >&2
@@ -13,11 +13,17 @@ if [[ ${EUID} -ne 0 ]]; then
 fi
 
 export DEBIAN_FRONTEND=noninteractive
+
+if [[ -f /root/namer-install.env ]]; then
+  # shellcheck disable=SC1091
+  source /root/namer-install.env
+fi
+
 MEDIA_ROOT="${NAMER_MEDIA_ROOT:-/mnt/namer-share}"
 TPDB_TOKEN="${NAMER_TPDB_TOKEN:-}"
-TZ_VALUE="${TZ:-Europe/Berlin}"
-PUID_VALUE="${PUID:-1000}"
-PGID_VALUE="${PGID:-1000}"
+TZ_VALUE="${TZ:-${NAMER_TZ:-Europe/Berlin}}"
+PUID_VALUE="${PUID:-${NAMER_PUID:-1000}}"
+PGID_VALUE="${PGID:-${NAMER_PGID:-1000}}"
 WATCH_DIR="${NAMER_WATCH_DIR:-/media/watch}"
 WORK_DIR="${NAMER_WORK_DIR:-/media/work}"
 FAILED_DIR="${NAMER_FAILED_DIR:-/media/failed}"
@@ -27,6 +33,7 @@ WEB_PORT="${NAMER_WEB_PORT:-6980}"
 WEB_HOST="${NAMER_WEB_HOST:-0.0.0.0}"
 UPDATE_PERMS="${NAMER_UPDATE_PERMISSIONS_OWNERSHIP:-False}"
 NAMER_PATH="/opt/namer"
+INSTALL_ENV_PATH="/root/namer-install.env"
 
 if [[ -z "$TPDB_TOKEN" ]]; then
   echo
@@ -43,7 +50,7 @@ if [[ -z "$TPDB_TOKEN" ]]; then
   exit 1
 fi
 
-echo "Token received. Continuing with Namer configuration."
+echo "Token received. Continuing with native Namer installation."
 
 apt-get update
 apt-get install -y curl ca-certificates
@@ -196,5 +203,9 @@ dest_dir: ${DEST_DIR}
 If you are using a Proxmox host bind mount for your NAS share,
 map it to ${MEDIA_ROOT} so Namer can see the configured /media paths.
 EOF
+
+if [[ -f "$INSTALL_ENV_PATH" ]]; then
+  chmod 600 "$INSTALL_ENV_PATH" >/dev/null 2>&1 || true
+fi
 
 echo "Namer installed successfully. Web UI: http://${IP_ADDR}:${WEB_PORT}"
