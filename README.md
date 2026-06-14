@@ -6,7 +6,7 @@ Create a Proxmox LXC for [Namer](https://github.com/ThePornDatabase/namer) and r
 ghcr.io/theporndatabase/namer:latest
 ```
 
-The script creates a Debian LXC, installs Docker inside it, and starts Namer as a systemd-managed Docker container.
+The script creates a Debian LXC, installs Docker inside it, and starts Namer as a systemd-managed Docker container. Namer works directly on the QNAP/NFS mount at `/namer`.
 
 ## Run from Proxmox
 
@@ -101,6 +101,12 @@ If host access works but LXC access fails, either adjust the QNAP NFS export map
 
 ## Paths
 
+On the Proxmox host:
+
+```text
+/namer
+```
+
 Inside the LXC:
 
 ```text
@@ -110,7 +116,7 @@ Inside the LXC:
 Inside the Namer Docker container:
 
 ```text
-/media
+/namer
 /config
 ```
 
@@ -123,10 +129,10 @@ Generated Namer config:
 The generated config uses:
 
 ```text
-watch_dir = /media/watch
-work_dir = /media/work
-failed_dir = /media/faild
-dest_dir = /media/dest
+watch_dir = /namer/watch
+work_dir = /namer/work
+failed_dir = /namer/faild
+dest_dir = /namer/dest
 web = True
 port = 6980
 host = 0.0.0.0
@@ -163,6 +169,7 @@ pct exec <CTID> -- systemctl restart namer
 | `HOST_NAMER_PATH` | `/namer` | Proxmox host path for QNAP NFS mount |
 | `QNAP_IP` | `192.168.1.24` | QNAP IP used in error hints |
 | `QNAP_EXPORT` | `/namer` | QNAP NFS export used in error hints |
+| `NAMER_MEDIA_MOUNT` | `/namer` | Path used by Namer inside the Docker container |
 | `NAMER_PORT` | `6980` | WebUI port |
 | `PUID` | `99` | Namer Docker PUID |
 | `PGID` | `100` | Namer Docker PGID |
