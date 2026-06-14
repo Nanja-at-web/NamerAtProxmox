@@ -27,6 +27,17 @@ CTID=120 \
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/main/ct/namer.sh)"
 ```
 
+If the Proxmox host can write to `/namer` but the LXC cannot, create a privileged container for this NFS bind mount:
+
+```bash
+HOST_NAMER_PATH=/namer \
+QNAP_IP=192.168.1.24 \
+QNAP_EXPORT=/namer \
+NAMER_PORT=6980 \
+CT_UNPRIVILEGED=0 \
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/main/ct/namer.sh)"
+```
+
 ## QNAP NFS bind mount
 
 Use NFS for this Linux/Proxmox setup. Your QNAP exports include `/namer`, so mount it on the Proxmox host before running the container script:
@@ -68,6 +79,26 @@ mount -a
 findmnt /namer
 ```
 
+## NFS permissions
+
+An unprivileged LXC maps container root to a high host UID, usually `100000`. QNAP may reject writes from that mapped UID even when Proxmox host root can write.
+
+Test host access:
+
+```bash
+touch /namer/work/hosttest
+rm /namer/work/hosttest
+```
+
+Test LXC access:
+
+```bash
+pct exec <CTID> -- touch /namer/work/testfile
+pct exec <CTID> -- rm /namer/work/testfile
+```
+
+If host access works but LXC access fails, either adjust the QNAP NFS export mapping to allow the LXC mapped UID, or recreate the LXC with `CT_UNPRIVILEGED=0`.
+
 ## Paths
 
 Inside the LXC:
@@ -99,6 +130,9 @@ dest_dir = /media/dest
 web = True
 port = 6980
 host = 0.0.0.0
+update_permissions_ownership = False
+set_uid =
+set_gid =
 ```
 
 After install, edit the TPDB API token:
@@ -125,6 +159,7 @@ pct exec <CTID> -- systemctl restart namer
 | --- | --- | --- |
 | `CTID` | next available | Proxmox container ID |
 | `CT_HOSTNAME` | `namer` | LXC hostname |
+| `CT_UNPRIVILEGED` | `1` | Set `0` for a privileged LXC when QNAP NFS rejects unprivileged UID mappings |
 | `HOST_NAMER_PATH` | `/namer` | Proxmox host path for QNAP NFS mount |
 | `QNAP_IP` | `192.168.1.24` | QNAP IP used in error hints |
 | `QNAP_EXPORT` | `/namer` | QNAP NFS export used in error hints |
