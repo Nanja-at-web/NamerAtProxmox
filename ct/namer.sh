@@ -17,6 +17,7 @@ IP_CONFIG="${IP_CONFIG:-dhcp}"
 HOST_NAMER_PATH="${HOST_NAMER_PATH:-/namer}"
 CT_NAMER_PATH="${CT_NAMER_PATH:-/namer}"
 QNAP_IP="${QNAP_IP:-192.168.1.24}"
+QNAP_EXPORT="${QNAP_EXPORT:-/namer}"
 NAMER_PORT="${NAMER_PORT:-6980}"
 PUID="${PUID:-99}"
 PGID="${PGID:-100}"
@@ -59,12 +60,13 @@ if [[ ! -d "$HOST_NAMER_PATH" ]]; then
   cat >&2 <<EOF
 The host bind-mount source does not exist: $HOST_NAMER_PATH
 
-Mount your QNAP share on the Proxmox host first, for example:
+Mount your QNAP NFS export on the Proxmox host first, for example:
+  apt install -y nfs-common
   mkdir -p $HOST_NAMER_PATH
-  apt install -y cifs-utils
-  mount -t cifs //$QNAP_IP/namer $HOST_NAMER_PATH -o username=YOUR_USER,password=YOUR_PASSWORD,uid=$((100000 + PUID)),gid=$((100000 + PGID)),iocharset=utf8,noperm
+  showmount -e $QNAP_IP
+  mount -t nfs $QNAP_IP:$QNAP_EXPORT $HOST_NAMER_PATH
 
-Then rerun this script. Override HOST_NAMER_PATH if your share is mounted elsewhere.
+Then rerun this script. Override HOST_NAMER_PATH or QNAP_EXPORT if your share is mounted elsewhere.
 EOF
   exit 1
 fi
