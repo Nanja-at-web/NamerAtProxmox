@@ -10,6 +10,7 @@ DEST_DIR_NAME="${DEST_DIR_NAME:-dest}"
 NAMER_IMAGE="${NAMER_IMAGE:-ghcr.io/theporndatabase/namer:latest}"
 CONFIG_DIR="${CONFIG_DIR:-/opt/namer/config}"
 MEDIA_DIR="${MEDIA_DIR:-/namer}"
+NAMER_MEDIA_MOUNT="${NAMER_MEDIA_MOUNT:-/namer}"
 
 info() { echo -e "\033[1;34m[INFO]\033[0m $*"; }
 ok() { echo -e "\033[1;32m[OK]\033[0m $*"; }
@@ -33,10 +34,10 @@ if [[ ! -f "$CONFIG_DIR/namer.cfg" ]]; then
   curl -fsSL https://raw.githubusercontent.com/ThePornDatabase/namer/main/namer/namer.cfg.default -o "$CONFIG_DIR/namer.cfg"
   sed -i \
     -e 's|^porndb_token =.*|porndb_token = CHANGE_ME|' \
-    -e 's|^watch_dir =.*|watch_dir = /media/watch|' \
-    -e 's|^work_dir =.*|work_dir = /media/work|' \
-    -e "s|^failed_dir =.*|failed_dir = /media/$FAILED_DIR_NAME|" \
-    -e "s|^dest_dir =.*|dest_dir = /media/$DEST_DIR_NAME|" \
+    -e "s|^watch_dir =.*|watch_dir = $NAMER_MEDIA_MOUNT/watch|" \
+    -e "s|^work_dir =.*|work_dir = $NAMER_MEDIA_MOUNT/work|" \
+    -e "s|^failed_dir =.*|failed_dir = $NAMER_MEDIA_MOUNT/$FAILED_DIR_NAME|" \
+    -e "s|^dest_dir =.*|dest_dir = $NAMER_MEDIA_MOUNT/$DEST_DIR_NAME|" \
     -e 's|^web =.*|web = True|' \
     -e "s|^port =.*|port = $NAMER_PORT|" \
     -e 's|^host =.*|host = 0.0.0.0|' \
@@ -67,7 +68,7 @@ ExecStart=/usr/bin/docker run --name namer --pull always \
   -e PGID=${PGID} \
   -e UMASK=${UMASK} \
   -v ${CONFIG_DIR}:/config \
-  -v ${MEDIA_DIR}:/media \
+  -v ${MEDIA_DIR}:${NAMER_MEDIA_MOUNT} \
   ${NAMER_IMAGE}
 ExecStop=/usr/bin/docker stop namer
 
