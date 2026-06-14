@@ -5,6 +5,7 @@ APP="Namer"
 RAW_BASE="${RAW_BASE:-https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/main}"
 CTID="${CTID:-}"
 CT_HOSTNAME="${CT_HOSTNAME:-${NAMER_HOSTNAME:-namer}}"
+CT_UNPRIVILEGED="${CT_UNPRIVILEGED:-1}"
 PASSWORD="${PASSWORD:-}"
 TEMPLATE_STORAGE="${TEMPLATE_STORAGE:-local}"
 CONTAINER_STORAGE="${CONTAINER_STORAGE:-local-lvm}"
@@ -56,6 +57,10 @@ need_cmd pct
 need_cmd pveam
 need_cmd curl
 
+if [[ ! "$CT_UNPRIVILEGED" =~ ^[01]$ ]]; then
+  fail "CT_UNPRIVILEGED must be 0 or 1."
+fi
+
 if [[ ! -d "$HOST_NAMER_PATH" ]]; then
   cat >&2 <<EOF
 The host bind-mount source does not exist: $HOST_NAMER_PATH
@@ -101,7 +106,7 @@ create_args=(
   --rootfs "$CONTAINER_STORAGE:$DISK_SIZE"
   --net0 "name=eth0,bridge=$BRIDGE,ip=$IP_CONFIG"
   --features nesting=1,keyctl=1
-  --unprivileged 1
+  --unprivileged "$CT_UNPRIVILEGED"
   --onboot 1
   --mp0 "$HOST_NAMER_PATH,mp=$CT_NAMER_PATH"
 )
@@ -130,6 +135,7 @@ pct exec "$CTID" -- env \
 IP_ADDR="$(pct exec "$CTID" -- hostname -I 2>/dev/null | awk '{print $1}')"
 ok "$APP LXC created successfully."
 echo "Container ID: $CTID"
+echo "Unprivileged: $CT_UNPRIVILEGED"
 echo "QNAP/host bind mount: $HOST_NAMER_PATH -> $CT_NAMER_PATH"
 echo "Namer media mount: $CT_NAMER_PATH -> /media inside Docker"
 if [[ -n "$IP_ADDR" ]]; then
