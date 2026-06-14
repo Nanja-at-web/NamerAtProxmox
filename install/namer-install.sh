@@ -58,6 +58,7 @@ Restart=always
 RestartSec=10
 ExecStartPre=-/usr/bin/docker rm -f namer
 ExecStart=/usr/bin/docker run --name namer --pull always \
+  --log-driver=journald \
   -p ${NAMER_PORT}:${NAMER_PORT} \
   -e PUID=${PUID} \
   -e PGID=${PGID} \
@@ -66,7 +67,6 @@ ExecStart=/usr/bin/docker run --name namer --pull always \
   -v ${MEDIA_DIR}:/media \
   ${NAMER_IMAGE}
 ExecStop=/usr/bin/docker stop namer
-ExecStopPost=-/usr/bin/docker rm -f namer
 
 [Install]
 WantedBy=multi-user.target
