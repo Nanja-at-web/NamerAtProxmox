@@ -21,14 +21,24 @@ With explicit options:
 ```bash
 HOST_NAMER_PATH=/namer \
 QNAP_IP=192.168.1.24 \
+QNAP_EXPORT=/namer \
 NAMER_PORT=6980 \
 CTID=120 \
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/main/ct/namer.sh)"
 ```
 
-## QNAP bind mount
+## QNAP NFS bind mount
 
-The script expects the QNAP share to already be mounted on the Proxmox host. Default source path:
+Use NFS for this Linux/Proxmox setup. Your QNAP exports include `/namer`, so mount it on the Proxmox host before running the container script:
+
+```bash
+apt install -y nfs-common
+mkdir -p /namer
+showmount -e 192.168.1.24
+mount -t nfs 192.168.1.24:/namer /namer
+```
+
+The script expects this mounted host path by default:
 
 ```text
 /namer
@@ -43,18 +53,20 @@ Default folder layout:
 /namer/dest
 ```
 
-Example QNAP mount on the Proxmox host:
+The script creates missing subfolders automatically after the NFS mount exists.
 
-```bash
-mkdir -p /namer
-apt install -y cifs-utils
-mount -t cifs //192.168.1.24/namer /namer \
-  -o username=YOUR_USER,password=YOUR_PASSWORD,uid=100099,gid=100100,iocharset=utf8,noperm
+For a persistent mount, add this to `/etc/fstab` on the Proxmox host:
+
+```fstab
+192.168.1.24:/namer /namer nfs defaults,_netdev,nofail 0 0
 ```
 
-Why `uid=100099,gid=100100`? The LXC is unprivileged. Namer runs with `PUID=99` and `PGID=100`, which map to host IDs `100099` and `100100`.
+Then test it:
 
-For a persistent mount, add an `/etc/fstab` entry on the Proxmox host and store credentials in a root-readable credentials file.
+```bash
+mount -a
+findmnt /namer
+```
 
 ## Paths
 
@@ -113,8 +125,9 @@ pct exec <CTID> -- systemctl restart namer
 | --- | --- | --- |
 | `CTID` | next available | Proxmox container ID |
 | `CT_HOSTNAME` | `namer` | LXC hostname |
-| `HOST_NAMER_PATH` | `/namer` | Proxmox host path for QNAP share |
-| `QNAP_IP` | `192.168.1.24` | Informational QNAP IP used in error hints |
+| `HOST_NAMER_PATH` | `/namer` | Proxmox host path for QNAP NFS mount |
+| `QNAP_IP` | `192.168.1.24` | QNAP IP used in error hints |
+| `QNAP_EXPORT` | `/namer` | QNAP NFS export used in error hints |
 | `NAMER_PORT` | `6980` | WebUI port |
 | `PUID` | `99` | Namer Docker PUID |
 | `PGID` | `100` | Namer Docker PGID |
