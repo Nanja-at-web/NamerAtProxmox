@@ -40,6 +40,9 @@ if [[ ! -f "$CONFIG_DIR/namer.cfg" ]]; then
     -e 's|^web =.*|web = True|' \
     -e "s|^port =.*|port = $NAMER_PORT|" \
     -e 's|^host =.*|host = 0.0.0.0|' \
+    -e 's|^update_permissions_ownership =.*|update_permissions_ownership = False|' \
+    -e 's|^set_uid =.*|set_uid =|' \
+    -e 's|^set_gid =.*|set_gid =|' \
     "$CONFIG_DIR/namer.cfg"
 else
   info "Keeping existing $CONFIG_DIR/namer.cfg"
