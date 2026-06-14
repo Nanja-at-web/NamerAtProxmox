@@ -4,7 +4,7 @@ set -Eeuo pipefail
 APP="Namer"
 RAW_BASE="${RAW_BASE:-https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/main}"
 CTID="${CTID:-}"
-HOSTNAME="${HOSTNAME:-namer}"
+CT_HOSTNAME="${CT_HOSTNAME:-${NAMER_HOSTNAME:-namer}}"
 PASSWORD="${PASSWORD:-}"
 TEMPLATE_STORAGE="${TEMPLATE_STORAGE:-local}"
 CONTAINER_STORAGE="${CONTAINER_STORAGE:-local-lvm}"
@@ -26,7 +26,6 @@ DEST_DIR_NAME="${DEST_DIR_NAME:-dest}"
 
 info() { echo -e "\033[1;34m[INFO]\033[0m $*"; }
 ok() { echo -e "\033[1;32m[OK]\033[0m $*"; }
-warn() { echo -e "\033[1;33m[WARN]\033[0m $*"; }
 fail() { echo -e "\033[1;31m[ERROR]\033[0m $*" >&2; exit 1; }
 
 need_cmd() {
@@ -91,18 +90,25 @@ if ! pveam list "$TEMPLATE_STORAGE" | awk '{print $1}' | grep -Fxq "$TEMPLATE_ST
 fi
 
 info "Creating $APP LXC $CTID"
-pct create "$CTID" "$TEMPLATE_STORAGE:vztmpl/$TEMPLATE" \
-  --hostname "$HOSTNAME" \
-  --cores "$CORES" \
-  --memory "$MEMORY" \
-  --swap "$SWAP" \
-  --rootfs "$CONTAINER_STORAGE:$DISK_SIZE" \
-  --net0 "name=eth0,bridge=$BRIDGE,ip=$IP_CONFIG" \
-  --features nesting=1,keyctl=1 \
-  --unprivileged 1 \
-  --onboot 1 \
-  --mp0 "$HOST_NAMER_PATH,mp=$CT_NAMER_PATH" \
-  ${PASSWORD:+--password "$PASSWORD"}
+create_args=(
+  "$CTID" "$TEMPLATE_STORAGE:vztmpl/$TEMPLATE"
+  --hostname "$CT_HOSTNAME"
+  --cores "$CORES"
+  --memory "$MEMORY"
+  --swap "$SWAP"
+  --rootfs "$CONTAINER_STORAGE:$DISK_SIZE"
+  --net0 "name=eth0,bridge=$BRIDGE,ip=$IP_CONFIG"
+  --features nesting=1,keyctl=1
+  --unprivileged 1
+  --onboot 1
+  --mp0 "$HOST_NAMER_PATH,mp=$CT_NAMER_PATH"
+)
+
+if [[ -n "$PASSWORD" ]]; then
+  create_args+=(--password "$PASSWORD")
+fi
+
+pct create "${create_args[@]}"
 
 info "Starting LXC $CTID"
 pct start "$CTID"
