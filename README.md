@@ -112,7 +112,7 @@ pct exec <CTID> -- systemctl restart namer
 | Variable | Default | Meaning |
 | --- | --- | --- |
 | `CTID` | next available | Proxmox container ID |
-| `HOSTNAME` | `namer` | LXC hostname |
+| `CT_HOSTNAME` | `namer` | LXC hostname |
 | `HOST_NAMER_PATH` | `/namer` | Proxmox host path for QNAP share |
 | `QNAP_IP` | `192.168.1.24` | Informational QNAP IP used in error hints |
 | `NAMER_PORT` | `6980` | WebUI port |
