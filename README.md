@@ -10,6 +10,8 @@ Nanja-at-web/namer@codex/matching-cleanup-review-db
 
 The script creates a Debian LXC, installs Docker inside it, builds the selected Namer branch as a local Docker image, and starts Namer as a systemd-managed Docker container. Namer works directly on the QNAP/NFS mount at `/namer`.
 
+The installer keeps the Proxmox console quiet by default. Detailed `apt`, `pct`, `git`, and Docker build output is written to log files and shown only when something fails.
+
 ## Run from Proxmox
 
 Run this on the Proxmox VE host as `root`:
@@ -189,6 +191,26 @@ Then restart Namer:
 
 ```bash
 pct exec <CTID> -- systemctl restart namer
+```
+
+## Logs
+
+The host-side installer prints the host log path at startup and again at the end:
+
+```text
+Host install log: /tmp/nameratproxmox-YYYYMMDDHHMMSS.log
+```
+
+The container-side installer log is available with:
+
+```bash
+pct exec <CTID> -- tail -n 120 /var/log/namer-install.log
+```
+
+Namer service logs:
+
+```bash
+pct exec <CTID> -- journalctl -u namer -n 120 --no-pager
 ```
 
 ## Environment variables
