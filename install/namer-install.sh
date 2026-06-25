@@ -24,7 +24,6 @@ export DEBIAN_FRONTEND=noninteractive
 
 info "Updating base system"
 apt-get update
-apt-get upgrade -y
 
 info "Installing Docker and tools"
 apt-get install -y ca-certificates curl git gnupg docker.io
@@ -32,7 +31,7 @@ systemctl enable --now docker
 
 info "Preparing Namer directories"
 mkdir -p "$CONFIG_DIR" "$MEDIA_DIR/watch" "$MEDIA_DIR/work" "$MEDIA_DIR/$FAILED_DIR_NAME" "$MEDIA_DIR/$DEST_DIR_NAME"
-chmod -R 775 "$MEDIA_DIR" || true
+chmod 775 "$MEDIA_DIR" "$MEDIA_DIR/watch" "$MEDIA_DIR/work" "$MEDIA_DIR/$FAILED_DIR_NAME" "$MEDIA_DIR/$DEST_DIR_NAME" 2>/dev/null || true
 
 if [[ ! -f "$CONFIG_DIR/namer.cfg" ]]; then
   info "Creating default namer.cfg"

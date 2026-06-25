@@ -91,6 +91,7 @@ Default folder layout:
 ```
 
 The script creates missing subfolders automatically after the NFS mount exists.
+It does not recursively chmod `/namer`, because that path is expected to be a NAS/NFS mount and may contain a large media library.
 
 For a persistent mount, add this to `/etc/fstab` on the Proxmox host:
 
