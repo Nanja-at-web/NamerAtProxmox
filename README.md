@@ -11,6 +11,7 @@ Nanja-at-web/namer@codex/matching-cleanup-review-db
 The script creates a Debian LXC, installs Docker inside it, builds the selected Namer branch as a local Docker image, and starts Namer as a systemd-managed Docker container. Namer works directly on the QNAP/NFS mount at `/namer`.
 
 The installer keeps the Proxmox console quiet by default. Detailed `apt`, `pct`, `git`, and Docker build output is written to log files and shown only when something fails.
+When run from an interactive Proxmox shell, the entry script opens a Proxmox VE Helper-Scripts-style menu with `Default Install` and `Advanced Install`.
 
 ## Run from Proxmox
 
@@ -18,6 +19,12 @@ Run this on the Proxmox VE host as `root`:
 
 ```bash
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/main/ct/namer.sh)"
+```
+
+To skip the menu and force the default path:
+
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/main/ct/namer.sh)" -- default
 ```
 
 That simple command currently installs:
