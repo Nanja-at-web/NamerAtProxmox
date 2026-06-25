@@ -10,9 +10,9 @@ PASSWORD="${PASSWORD:-}"
 TEMPLATE_STORAGE="${TEMPLATE_STORAGE:-local}"
 CONTAINER_STORAGE="${CONTAINER_STORAGE:-local-lvm}"
 CORES="${CORES:-2}"
-MEMORY="${MEMORY:-2048}"
+MEMORY="${MEMORY:-4096}"
 SWAP="${SWAP:-512}"
-DISK_SIZE="${DISK_SIZE:-8}"
+DISK_SIZE="${DISK_SIZE:-24}"
 BRIDGE="${BRIDGE:-vmbr0}"
 IP_CONFIG="${IP_CONFIG:-dhcp}"
 HOST_NAMER_PATH="${HOST_NAMER_PATH:-/namer}"
@@ -20,6 +20,11 @@ CT_NAMER_PATH="${CT_NAMER_PATH:-/namer}"
 QNAP_IP="${QNAP_IP:-192.168.1.24}"
 QNAP_EXPORT="${QNAP_EXPORT:-/namer}"
 NAMER_PORT="${NAMER_PORT:-6980}"
+NAMER_INSTALL_MODE="${NAMER_INSTALL_MODE:-source}"
+NAMER_SOURCE_REPO="${NAMER_SOURCE_REPO:-Nanja-at-web/namer}"
+NAMER_SOURCE_REF="${NAMER_SOURCE_REF:-codex/matching-cleanup-review-db}"
+NAMER_IMAGE="${NAMER_IMAGE:-local/namer:${NAMER_SOURCE_REF//\//-}}"
+NAMER_CONFIG_URL="${NAMER_CONFIG_URL:-https://raw.githubusercontent.com/${NAMER_SOURCE_REPO}/${NAMER_SOURCE_REF}/namer/namer.cfg.default}"
 PUID="${PUID:-99}"
 PGID="${PGID:-100}"
 UMASK="${UMASK:-000}"
@@ -125,6 +130,11 @@ info "Installing Docker and Namer inside LXC"
 install_script="$(curl -fsSL "$RAW_BASE/install/namer-install.sh")"
 pct exec "$CTID" -- env \
   NAMER_PORT="$NAMER_PORT" \
+  NAMER_INSTALL_MODE="$NAMER_INSTALL_MODE" \
+  NAMER_SOURCE_REPO="$NAMER_SOURCE_REPO" \
+  NAMER_SOURCE_REF="$NAMER_SOURCE_REF" \
+  NAMER_IMAGE="$NAMER_IMAGE" \
+  NAMER_CONFIG_URL="$NAMER_CONFIG_URL" \
   PUID="$PUID" \
   PGID="$PGID" \
   UMASK="$UMASK" \
@@ -137,7 +147,10 @@ ok "$APP LXC created successfully."
 echo "Container ID: $CTID"
 echo "Unprivileged: $CT_UNPRIVILEGED"
 echo "QNAP/host bind mount: $HOST_NAMER_PATH -> $CT_NAMER_PATH"
-echo "Namer media mount: $CT_NAMER_PATH -> /media inside Docker"
+echo "Namer install mode: $NAMER_INSTALL_MODE"
+echo "Namer source: $NAMER_SOURCE_REPO@$NAMER_SOURCE_REF"
+echo "Namer image: $NAMER_IMAGE"
+echo "Namer media mount: $CT_NAMER_PATH -> $CT_NAMER_PATH inside Docker"
 if [[ -n "$IP_ADDR" ]]; then
   echo "WebUI: http://$IP_ADDR:$NAMER_PORT"
 else

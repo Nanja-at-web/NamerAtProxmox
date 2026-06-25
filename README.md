@@ -1,12 +1,14 @@
 # NamerAtProxmox
 
-Create a Proxmox LXC for [Namer](https://github.com/ThePornDatabase/namer) and run the official Docker image:
+Create a Proxmox LXC for [Namer](https://github.com/ThePornDatabase/namer).
+
+By default this installer builds and runs the configured Nanja-at-web Namer branch:
 
 ```text
-ghcr.io/theporndatabase/namer:latest
+Nanja-at-web/namer@codex/matching-cleanup-review-db
 ```
 
-The script creates a Debian LXC, installs Docker inside it, and starts Namer as a systemd-managed Docker container. Namer works directly on the QNAP/NFS mount at `/namer`.
+The script creates a Debian LXC, installs Docker inside it, builds the selected Namer branch as a local Docker image, and starts Namer as a systemd-managed Docker container. Namer works directly on the QNAP/NFS mount at `/namer`.
 
 ## Run from Proxmox
 
@@ -14,6 +16,15 @@ Run this on the Proxmox VE host as `root`:
 
 ```bash
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/main/ct/namer.sh)"
+```
+
+That simple command currently installs:
+
+```text
+NAMER_INSTALL_MODE=source
+NAMER_SOURCE_REPO=Nanja-at-web/namer
+NAMER_SOURCE_REF=codex/matching-cleanup-review-db
+NAMER_IMAGE=local/namer:codex-matching-cleanup-review-db
 ```
 
 With explicit options:
@@ -24,6 +35,21 @@ QNAP_IP=192.168.1.24 \
 QNAP_EXPORT=/namer \
 NAMER_PORT=6980 \
 CTID=120 \
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/main/ct/namer.sh)"
+```
+
+Install another Namer branch:
+
+```bash
+NAMER_SOURCE_REF=your-branch-name \
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/main/ct/namer.sh)"
+```
+
+Use the official upstream Docker image instead of building from source:
+
+```bash
+NAMER_INSTALL_MODE=image \
+NAMER_IMAGE=ghcr.io/theporndatabase/namer:latest \
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/main/ct/namer.sh)"
 ```
 
@@ -139,6 +165,11 @@ host = 0.0.0.0
 update_permissions_ownership = False
 set_uid =
 set_gid =
+database_path = /config/database
+use_database = True
+cleanup_enabled = True
+review_database_enabled = True
+review_database_path = /config/database/review.sqlite
 ```
 
 After install, edit the TPDB API token:
@@ -171,11 +202,16 @@ pct exec <CTID> -- systemctl restart namer
 | `QNAP_EXPORT` | `/namer` | QNAP NFS export used in error hints |
 | `NAMER_MEDIA_MOUNT` | `/namer` | Path used by Namer inside the Docker container |
 | `NAMER_PORT` | `6980` | WebUI port |
+| `NAMER_INSTALL_MODE` | `source` | `source` builds a Docker image from a Git branch, `image` pulls `NAMER_IMAGE` |
+| `NAMER_SOURCE_REPO` | `Nanja-at-web/namer` | GitHub repo used in source mode |
+| `NAMER_SOURCE_REF` | `codex/matching-cleanup-review-db` | Git branch or tag used in source mode |
+| `NAMER_IMAGE` | `local/namer:codex-matching-cleanup-review-db` | Docker image name to build or pull |
+| `NAMER_CONFIG_URL` | branch default config | URL used to create `/opt/namer/config/namer.cfg` |
 | `PUID` | `99` | Namer Docker PUID |
 | `PGID` | `100` | Namer Docker PGID |
 | `UMASK` | `000` | Namer Docker UMASK |
 | `FAILED_DIR_NAME` | `faild` | Failed folder name, matching your current layout |
 | `DEST_DIR_NAME` | `dest` | Destination folder name |
 | `CORES` | `2` | LXC CPU cores |
-| `MEMORY` | `2048` | LXC RAM in MiB |
-| `DISK_SIZE` | `8` | LXC root disk size in GiB |
+| `MEMORY` | `4096` | LXC RAM in MiB |
+| `DISK_SIZE` | `24` | LXC root disk size in GiB. Source builds need more root disk than image-only installs |
