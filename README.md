@@ -48,8 +48,8 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/Nanja-at-web/NamerAtProx
 Use the official upstream Docker image instead of building from source:
 
 ```bash
-NAMER_INSTALL_MODE=image \
-NAMER_IMAGE=ghcr.io/theporndatabase/namer:latest \
+NAMER_INSTALL_MODE_OVERRIDE=image \
+NAMER_IMAGE_OVERRIDE=ghcr.io/theporndatabase/namer:latest \
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/main/ct/namer.sh)"
 ```
 
@@ -202,10 +202,10 @@ pct exec <CTID> -- systemctl restart namer
 | `QNAP_EXPORT` | `/namer` | QNAP NFS export used in error hints |
 | `NAMER_MEDIA_MOUNT` | `/namer` | Path used by Namer inside the Docker container |
 | `NAMER_PORT` | `6980` | WebUI port |
-| `NAMER_INSTALL_MODE` | `source` | `source` builds a Docker image from a Git branch, `image` pulls `NAMER_IMAGE` |
+| `NAMER_INSTALL_MODE_OVERRIDE` | `source` | `source` builds a Docker image from a Git branch, `image` pulls `NAMER_IMAGE_OVERRIDE` |
 | `NAMER_SOURCE_REPO` | `Nanja-at-web/namer` | GitHub repo used in source mode |
 | `NAMER_SOURCE_REF` | `codex/matching-cleanup-review-db` | Git branch or tag used in source mode |
-| `NAMER_IMAGE` | `local/namer:codex-matching-cleanup-review-db` | Docker image name to build or pull |
+| `NAMER_IMAGE_OVERRIDE` | `local/namer:codex-matching-cleanup-review-db` | Docker image name to build or pull |
 | `NAMER_CONFIG_URL` | branch default config | URL used to create `/opt/namer/config/namer.cfg` |
 | `PUID` | `99` | Namer Docker PUID |
 | `PGID` | `100` | Namer Docker PGID |
