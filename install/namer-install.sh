@@ -64,12 +64,13 @@ if [[ "$NAMER_INSTALL_MODE" == "source" ]]; then
   if [[ -d "$NAMER_SRC_DIR/.git" ]]; then
     git -C "$NAMER_SRC_DIR" fetch --depth 1 origin "$NAMER_SOURCE_REF"
     git -C "$NAMER_SRC_DIR" checkout -B build FETCH_HEAD
+    git -C "$NAMER_SRC_DIR" submodule update --init --recursive --depth 1
   elif [[ -e "$NAMER_SRC_DIR" ]]; then
     echo "[ERROR] $NAMER_SRC_DIR exists but is not a git checkout." >&2
     exit 1
   else
     mkdir -p "$(dirname "$NAMER_SRC_DIR")"
-    git clone --depth 1 --branch "$NAMER_SOURCE_REF" "https://github.com/${NAMER_SOURCE_REPO}.git" "$NAMER_SRC_DIR"
+    git clone --depth 1 --recurse-submodules --shallow-submodules --branch "$NAMER_SOURCE_REF" "https://github.com/${NAMER_SOURCE_REPO}.git" "$NAMER_SRC_DIR"
   fi
   docker build --pull -t "$NAMER_IMAGE" "$NAMER_SRC_DIR"
   DOCKER_PULL_POLICY="never"
