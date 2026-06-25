@@ -12,6 +12,7 @@ The script creates a Debian LXC, installs Docker inside it, builds the selected 
 
 The installer keeps the Proxmox console quiet by default. Detailed `apt`, `pct`, `git`, and Docker build output is written to log files and shown only when something fails.
 When run from an interactive Proxmox shell, the entry script opens a Proxmox VE Helper-Scripts-style menu with `Default Install` and `Advanced Install`.
+The source install builds a local Docker image and can take several minutes; the Docker build output is streamed to the console and log so the install no longer appears stuck at `Installing Namer`.
 
 ## Run from Proxmox
 

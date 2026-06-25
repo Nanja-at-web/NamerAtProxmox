@@ -9,13 +9,14 @@ NSAPP="namer"
 RAW_BASE="${RAW_BASE:-https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/main}"
 LOG_FILE="${LOG_FILE:-/tmp/${NSAPP}-create-$(date +%Y%m%d%H%M%S).log}"
 
-YW="\033[33m"
-BL="\033[36m"
-GN="\033[1;92m"
-RD="\033[01;31m"
-CM="\033[0;36m"
-BOLD="\033[1m"
-CL="\033[m"
+YW=$'\033[33m'
+BL=$'\033[36m'
+GN=$'\033[1;92m'
+RD=$'\033[01;31m'
+CM=$'\033[0;36m'
+BOLD=$'\033[1m'
+CL=$'\033[m'
+CLEAR_LINE=$'\r\033[2K'
 INFO="${BL}[i]${CL}"
 OK="${GN}[OK]${CL}"
 ERROR="${RD}[ERROR]${CL}"
@@ -65,9 +66,9 @@ EOF
 }
 
 msg_info() { echo -ne " ${INFO} ${YW}$*${CL}"; }
-msg_ok() { echo -e "\r ${OK} ${GN}$*${CL}"; }
+msg_ok() { echo -e "${CLEAR_LINE} ${OK} ${GN}$*${CL}"; }
 msg_error() {
-  echo -e "\r ${ERROR} ${RD}$*${CL}" >&2
+  echo -e "${CLEAR_LINE} ${ERROR} ${RD}$*${CL}" >&2
   echo -e " ${INFO} Log: ${BL}${LOG_FILE}${CL}" >&2
   tail -n 80 "$LOG_FILE" >&2 2>/dev/null || true
   exit 1
@@ -297,8 +298,10 @@ build_container() {
   msg_ok "Network Connected: ${BL}${ip_in_lxc}${CL}"
 
   msg_info "Installing ${APP}"
+  echo
   install_script="$(curl -fsSL "$RAW_BASE/install/namer-install.sh")"
-  if pct exec "$CTID" -- env \
+  set +e
+  pct exec "$CTID" -- env \
     LOG_FILE="/var/log/namer-install.log" \
     NAMER_PORT="$NAMER_PORT" \
     NAMER_INSTALL_MODE="$NAMER_INSTALL_MODE" \
@@ -311,7 +314,10 @@ build_container() {
     UMASK="$UMASK" \
     FAILED_DIR_NAME="$FAILED_DIR_NAME" \
     DEST_DIR_NAME="$DEST_DIR_NAME" \
-    bash -s <<<"$install_script" >>"$LOG_FILE" 2>&1; then
+    bash -s <<<"$install_script" 2>&1 | tee -a "$LOG_FILE"
+  install_status=${PIPESTATUS[0]}
+  set -e
+  if [[ "$install_status" -eq 0 ]]; then
     msg_ok "Installed ${APP}"
   else
     msg_error "Installing ${APP}"

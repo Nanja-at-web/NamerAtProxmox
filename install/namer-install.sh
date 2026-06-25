@@ -18,14 +18,19 @@ CONFIG_DIR="${CONFIG_DIR:-/opt/namer/config}"
 MEDIA_DIR="${MEDIA_DIR:-/namer}"
 NAMER_MEDIA_MOUNT="${NAMER_MEDIA_MOUNT:-/namer}"
 
-info() { echo -e "\033[1;34m[INFO]\033[0m $*"; }
-ok() { echo -e "\033[1;32m[OK]\033[0m $*"; }
+INFO_COLOR=$'\033[1;34m'
+OK_COLOR=$'\033[1;32m'
+ERROR_COLOR=$'\033[1;31m'
+RESET_COLOR=$'\033[0m'
+CLEAR_LINE=$'\r\033[2K'
 
-msg_info() { echo -ne "\033[1;34m[INFO]\033[0m $*..."; }
-msg_ok() { echo -e " \033[1;32mOK\033[0m"; }
+info() { echo -e "${INFO_COLOR}[INFO]${RESET_COLOR} $*"; }
+ok() { echo -e "${OK_COLOR}[OK]${RESET_COLOR} $*"; }
+
+msg_info() { echo -ne "${INFO_COLOR}[INFO]${RESET_COLOR} $*..."; }
+msg_ok() { echo -e "${CLEAR_LINE}${OK_COLOR}[OK]${RESET_COLOR} $*"; }
 msg_fail() {
-  echo -e " \033[1;31mFAILED\033[0m"
-  echo -e "\033[1;31m[ERROR]\033[0m $*" >&2
+  echo -e "${CLEAR_LINE}${ERROR_COLOR}[ERROR]${RESET_COLOR} $*" >&2
   echo "Log: $LOG_FILE" >&2
   tail -n 100 "$LOG_FILE" >&2 || true
   exit 1
@@ -36,7 +41,19 @@ run_quiet() {
   shift
   msg_info "$label"
   if "$@" >>"$LOG_FILE" 2>&1; then
-    msg_ok
+    msg_ok "$label"
+  else
+    msg_fail "$label"
+  fi
+}
+
+run_stream() {
+  local label="$1"
+  shift
+  msg_info "$label"
+  echo
+  if "$@" 2>&1 | tee -a "$LOG_FILE"; then
+    msg_ok "$label"
   else
     msg_fail "$label"
   fi
@@ -62,7 +79,7 @@ run_quiet "Enabling Docker service" systemctl enable --now docker
 msg_info "Preparing Namer directories"
 mkdir -p "$CONFIG_DIR" "$MEDIA_DIR/watch" "$MEDIA_DIR/work" "$MEDIA_DIR/$FAILED_DIR_NAME" "$MEDIA_DIR/$DEST_DIR_NAME"
 chmod 775 "$MEDIA_DIR" "$MEDIA_DIR/watch" "$MEDIA_DIR/work" "$MEDIA_DIR/$FAILED_DIR_NAME" "$MEDIA_DIR/$DEST_DIR_NAME" 2>/dev/null || true
-msg_ok
+msg_ok "Prepared Namer directories"
 
 if [[ ! -f "$CONFIG_DIR/namer.cfg" ]]; then
   msg_info "Creating default namer.cfg"
@@ -85,7 +102,7 @@ if [[ ! -f "$CONFIG_DIR/namer.cfg" ]]; then
     -e 's|^review_database_enabled =.*|review_database_enabled = True|' \
     -e 's|^review_database_path =.*|review_database_path = /config/database/review.sqlite|' \
     "$CONFIG_DIR/namer.cfg" >>"$LOG_FILE" 2>&1 || msg_fail "Creating default namer.cfg"
-  msg_ok
+  msg_ok "Created default namer.cfg"
 else
   info "Keeping existing $CONFIG_DIR/namer.cfg"
 fi
@@ -103,8 +120,8 @@ if [[ "$NAMER_INSTALL_MODE" == "source" ]]; then
     mkdir -p "$(dirname "$NAMER_SRC_DIR")"
     git clone --depth 1 --recurse-submodules --shallow-submodules --branch "$NAMER_SOURCE_REF" "https://github.com/${NAMER_SOURCE_REPO}.git" "$NAMER_SRC_DIR" >>"$LOG_FILE" 2>&1 || msg_fail "Preparing Namer source"
   fi
-  msg_ok
-  run_quiet "Building Namer Docker image" docker build --progress plain --pull -t "$NAMER_IMAGE" "$NAMER_SRC_DIR"
+  msg_ok "Prepared Namer source"
+  run_stream "Building Namer Docker image" docker build --progress plain --pull -t "$NAMER_IMAGE" "$NAMER_SRC_DIR"
   DOCKER_PULL_POLICY="never"
 elif [[ "$NAMER_INSTALL_MODE" == "image" ]]; then
   run_quiet "Pulling Namer image" docker pull "$NAMER_IMAGE"
@@ -139,7 +156,7 @@ ExecStop=/usr/bin/docker stop namer
 [Install]
 WantedBy=multi-user.target
 EOF
-msg_ok
+msg_ok "Created systemd service"
 
 run_quiet "Reloading systemd" systemctl daemon-reload
 run_quiet "Starting Namer service" systemctl enable --now namer.service
