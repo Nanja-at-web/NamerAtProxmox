@@ -3,6 +3,7 @@ set -Eeuo pipefail
 
 LOG_FILE="${LOG_FILE:-/var/log/namer-install.log}"
 NAMER_PORT="${NAMER_PORT:-6980}"
+PORNDB_TOKEN="${PORNDB_TOKEN:-${TPDB_TOKEN:-}}"
 PUID="${PUID:-99}"
 PGID="${PGID:-100}"
 UMASK="${UMASK:-000}"
@@ -59,6 +60,34 @@ run_stream() {
   fi
 }
 
+write_namer_diagnostics() {
+  {
+    echo
+    echo "---- systemctl status namer ----"
+    systemctl status namer --no-pager || true
+    echo
+    echo "---- docker ps -a ----"
+    docker ps -a || true
+    echo
+    echo "---- journalctl -u namer -n 160 ----"
+    journalctl -u namer -n 160 --no-pager || true
+  } >>"$LOG_FILE" 2>&1
+}
+
+wait_for_namer_webui() {
+  msg_info "Waiting for Namer WebUI"
+  for _ in {1..45}; do
+    if docker inspect -f '{{.State.Running}}' namer >/dev/null 2>&1 && curl -fsS "http://127.0.0.1:${NAMER_PORT}/" >/dev/null 2>&1; then
+      msg_ok "Namer WebUI is reachable"
+      return 0
+    fi
+    sleep 2
+  done
+
+  write_namer_diagnostics
+  msg_fail "Namer WebUI did not become reachable. Check porndb_token and service logs."
+}
+
 export DEBIAN_FRONTEND=noninteractive
 export LANG=C.UTF-8
 export LC_ALL=C.UTF-8
@@ -85,7 +114,7 @@ if [[ ! -f "$CONFIG_DIR/namer.cfg" ]]; then
   msg_info "Creating default namer.cfg"
   curl -fsSL "$NAMER_CONFIG_URL" -o "$CONFIG_DIR/namer.cfg" >>"$LOG_FILE" 2>&1 || msg_fail "Creating default namer.cfg"
   sed -i \
-    -e 's|^porndb_token =.*|porndb_token = CHANGE_ME|' \
+    -e "s|^porndb_token =.*|porndb_token = ${PORNDB_TOKEN:-CHANGE_ME}|" \
     -e "s|^watch_dir =.*|watch_dir = $NAMER_MEDIA_MOUNT/watch|" \
     -e "s|^work_dir =.*|work_dir = $NAMER_MEDIA_MOUNT/work|" \
     -e "s|^failed_dir =.*|failed_dir = $NAMER_MEDIA_MOUNT/$FAILED_DIR_NAME|" \
@@ -160,5 +189,6 @@ msg_ok "Created systemd service"
 
 run_quiet "Reloading systemd" systemctl daemon-reload
 run_quiet "Starting Namer service" systemctl enable --now namer.service
+wait_for_namer_webui
 
-ok "Namer installed. Edit $CONFIG_DIR/namer.cfg and set porndb_token before production use."
+ok "Namer installed and WebUI is reachable."

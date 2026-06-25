@@ -44,9 +44,12 @@ HOST_NAMER_PATH=/namer \
 QNAP_IP=192.168.1.24 \
 QNAP_EXPORT=/namer \
 NAMER_PORT=6980 \
+PORNDB_TOKEN=your_metadataapi_token \
 CTID=120 \
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/main/ct/namer.sh)"
 ```
+
+`PORNDB_TOKEN` is optional for installation, but Namer needs a valid token before it can successfully search/process files. Without it, the WebUI still starts and the token can be added later in `/opt/namer/config/namer.cfg`.
 
 Install another Namer branch:
 
