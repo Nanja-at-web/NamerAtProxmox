@@ -66,7 +66,9 @@ NAMER_IMAGE_OVERRIDE=ghcr.io/theporndatabase/namer:latest \
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/main/ct/namer.sh)"
 ```
 
-If the Proxmox host can write to `/namer` but the LXC cannot, create a privileged container for this NFS bind mount:
+The default installer creates a privileged LXC because QNAP/NFS often rejects the UID mapping used by unprivileged containers. If you explicitly want an unprivileged container, set `CT_UNPRIVILEGED=1` and make sure the QNAP export allows the mapped LXC UID/GID to write.
+
+Explicit privileged install:
 
 ```bash
 HOST_NAMER_PATH=/namer \
@@ -121,7 +123,7 @@ findmnt /namer
 
 ## NFS permissions
 
-An unprivileged LXC maps container root to a high host UID, usually `100000`. QNAP may reject writes from that mapped UID even when Proxmox host root can write.
+An unprivileged LXC maps container root to a high host UID, usually `100000`. QNAP may reject writes from that mapped UID even when Proxmox host root can write. For this reason the installer defaults to `CT_UNPRIVILEGED=0` and performs an LXC write test before installing Namer.
 
 Test host access:
 
@@ -230,7 +232,7 @@ pct exec <CTID> -- journalctl -u namer -n 120 --no-pager
 | --- | --- | --- |
 | `CTID` | next available | Proxmox container ID |
 | `CT_HOSTNAME` | `namer` | LXC hostname |
-| `CT_UNPRIVILEGED` | `1` | Set `0` for a privileged LXC when QNAP NFS rejects unprivileged UID mappings |
+| `CT_UNPRIVILEGED` | `0` | Privileged LXC by default so QNAP/NFS bind mounts are writable; set `1` only if your QNAP export allows unprivileged UID mappings |
 | `HOST_NAMER_PATH` | `/namer` | Proxmox host path for QNAP NFS mount |
 | `QNAP_IP` | `192.168.1.24` | QNAP IP used in error hints |
 | `QNAP_EXPORT` | `/namer` | QNAP NFS export used in error hints |

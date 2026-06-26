@@ -26,7 +26,7 @@ ADVANCED="${YW}[ADVANCED]${CL}"
 
 CTID="${CTID:-}"
 CT_HOSTNAME="${CT_HOSTNAME:-${NAMER_HOSTNAME:-namer}}"
-CT_UNPRIVILEGED="${CT_UNPRIVILEGED:-1}"
+CT_UNPRIVILEGED="${CT_UNPRIVILEGED:-0}"
 PASSWORD="${PASSWORD:-}"
 TEMPLATE_STORAGE="${TEMPLATE_STORAGE:-local}"
 CONTAINER_STORAGE="${CONTAINER_STORAGE:-local-lvm}"
@@ -190,7 +190,7 @@ advanced_settings() {
   HOST_NAMER_PATH="$(prompt_input "Namer Media Path" "Set host path for the QNAP/NFS media mount." "$HOST_NAMER_PATH")"
   NAMER_PORT="$(prompt_input "WebUI Port" "Set the Namer WebUI port." "$NAMER_PORT")"
 
-  if prompt_yesno "Container Type" "Use an unprivileged container?\n\nFor QNAP/NFS permission edge cases, privileged can be easier." "$([[ "$CT_UNPRIVILEGED" == "1" ]] && echo yes || echo no)"; then
+  if prompt_yesno "Container Type" "Use an unprivileged container?\n\nFor QNAP/NFS permission edge cases, privileged is recommended." "$([[ "$CT_UNPRIVILEGED" == "1" ]] && echo yes || echo no)"; then
     CT_UNPRIVILEGED="1"
   else
     CT_UNPRIVILEGED="0"
@@ -247,6 +247,16 @@ echo_settings() {
   echo
 }
 
+verify_lxc_media_write() {
+  local test_file="${CT_NAMER_PATH}/work/.namer-write-test"
+  msg_info "Checking LXC write access to QNAP/NFS mount"
+  if pct exec "$CTID" -- sh -c "touch '$test_file' && rm -f '$test_file'" >>"$LOG_FILE" 2>&1; then
+    msg_ok "LXC can write to QNAP/NFS mount"
+  else
+    msg_error "LXC cannot write to ${CT_NAMER_PATH}/work. Recreate with CT_UNPRIVILEGED=0 or adjust QNAP NFS UID/GID permissions."
+  fi
+}
+
 build_container() {
   if [[ ! "$CT_UNPRIVILEGED" =~ ^[01]$ ]]; then
     msg_error "CT_UNPRIVILEGED must be 0 or 1."
@@ -297,6 +307,7 @@ build_container() {
   done
   [[ -n "$ip_in_lxc" ]] || msg_error "No network in LXC container after 60 seconds"
   msg_ok "Network Connected: ${BL}${ip_in_lxc}${CL}"
+  verify_lxc_media_write
 
   msg_info "Installing ${APP}"
   echo
