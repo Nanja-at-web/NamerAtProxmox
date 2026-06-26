@@ -2,17 +2,17 @@
 
 Create a Proxmox LXC for [Namer](https://github.com/ThePornDatabase/namer).
 
-By default this installer builds and runs the configured Nanja-at-web Namer branch:
+By default this installer pulls and runs the prebuilt Nanja-at-web Namer image:
 
 ```text
-Nanja-at-web/namer@codex/matching-cleanup-review-db
+ghcr.io/nanja-at-web/namer:matching-cleanup-review-db
 ```
 
-The script creates a Debian LXC, installs Docker inside it, builds the selected Namer branch as a local Docker image, and starts Namer as a systemd-managed Docker container. Namer works directly on the QNAP/NFS mount at `/namer`.
+The script creates a Debian LXC, installs Docker inside it, pulls the selected Namer image, and starts Namer as a systemd-managed Docker container. Namer works directly on the QNAP/NFS mount at `/namer`.
 
 The installer keeps the Proxmox console quiet by default. Detailed `apt`, `pct`, `git`, and Docker build output is written to log files and shown only when something fails.
 When run from an interactive Proxmox shell, the entry script opens a Proxmox VE Helper-Scripts-style menu with `Default Install` and `Advanced Install`.
-The source install builds a local Docker image and can take several minutes; the Docker build output is streamed to the console and log so the install no longer appears stuck at `Installing Namer`.
+The default image install is fast like the original CT `125` flow. Source builds are still available through overrides, but can take several minutes.
 
 ## Run from Proxmox
 
@@ -31,10 +31,10 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/Nanja-at-web/NamerAtProx
 That simple command currently installs:
 
 ```text
-NAMER_INSTALL_MODE=source
+NAMER_INSTALL_MODE=image
 NAMER_SOURCE_REPO=Nanja-at-web/namer
 NAMER_SOURCE_REF=codex/matching-cleanup-review-db
-NAMER_IMAGE=local/namer:codex-matching-cleanup-review-db
+NAMER_IMAGE=ghcr.io/nanja-at-web/namer:matching-cleanup-review-db
 ```
 
 With explicit options:
@@ -54,11 +54,12 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/Nanja-at-web/NamerAtProx
 Install another Namer branch:
 
 ```bash
+NAMER_INSTALL_MODE_OVERRIDE=source \
 NAMER_SOURCE_REF=your-branch-name \
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/Nanja-at-web/NamerAtProxmox/main/ct/namer.sh)"
 ```
 
-Use the official upstream Docker image instead of building from source:
+Use the official upstream Docker image instead of the Nanja-at-web image:
 
 ```bash
 NAMER_INSTALL_MODE_OVERRIDE=image \
@@ -238,10 +239,10 @@ pct exec <CTID> -- journalctl -u namer -n 120 --no-pager
 | `QNAP_EXPORT` | `/namer` | QNAP NFS export used in error hints |
 | `NAMER_MEDIA_MOUNT` | `/namer` | Path used by Namer inside the Docker container |
 | `NAMER_PORT` | `6980` | WebUI port |
-| `NAMER_INSTALL_MODE_OVERRIDE` | `source` | `source` builds a Docker image from a Git branch, `image` pulls `NAMER_IMAGE_OVERRIDE` |
+| `NAMER_INSTALL_MODE_OVERRIDE` | `image` | `image` pulls `NAMER_IMAGE_OVERRIDE`; `source` builds a Docker image from a Git branch |
 | `NAMER_SOURCE_REPO` | `Nanja-at-web/namer` | GitHub repo used in source mode |
 | `NAMER_SOURCE_REF` | `codex/matching-cleanup-review-db` | Git branch or tag used in source mode |
-| `NAMER_IMAGE_OVERRIDE` | `local/namer:codex-matching-cleanup-review-db` | Docker image name to build or pull |
+| `NAMER_IMAGE_OVERRIDE` | `ghcr.io/nanja-at-web/namer:matching-cleanup-review-db` | Docker image name to build or pull |
 | `NAMER_CONFIG_URL` | branch default config | URL used to create `/opt/namer/config/namer.cfg` |
 | `PUID` | `99` | Namer Docker PUID |
 | `PGID` | `100` | Namer Docker PGID |
