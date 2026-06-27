@@ -37,6 +37,21 @@ msg_fail() {
   exit 1
 }
 
+ensure_config_value() {
+  local section="$1"
+  local key="$2"
+  local value="$3"
+  local file="$4"
+
+  if grep -Eq "^[[:space:]]*${key}[[:space:]]*=" "$file"; then
+    sed -i "s|^[[:space:]]*${key}[[:space:]]*=.*|${key} = ${value}|" "$file" >>"$LOG_FILE" 2>&1 || msg_fail "Updating $key"
+  elif grep -Eq "^\[${section}\]" "$file"; then
+    sed -i "/^\[${section}\]/a${key} = ${value}" "$file" >>"$LOG_FILE" 2>&1 || msg_fail "Updating $key"
+  else
+    printf '\n[%s]\n%s = %s\n' "$section" "$key" "$value" >>"$file" || msg_fail "Updating $key"
+  fi
+}
+
 run_quiet() {
   local label="$1"
   shift
@@ -135,6 +150,12 @@ if [[ ! -f "$CONFIG_DIR/namer.cfg" ]]; then
 else
   info "Keeping existing $CONFIG_DIR/namer.cfg"
 fi
+
+msg_info "Ensuring matching/review config"
+ensure_config_value "matching" "cleanup_enabled" "True" "$CONFIG_DIR/namer.cfg"
+ensure_config_value "review" "review_database_enabled" "True" "$CONFIG_DIR/namer.cfg"
+ensure_config_value "review" "review_database_path" "/config/database/review.sqlite" "$CONFIG_DIR/namer.cfg"
+msg_ok "Ensured matching/review config"
 
 DOCKER_PULL_POLICY="always"
 if [[ "$NAMER_INSTALL_MODE" == "source" ]]; then
