@@ -153,6 +153,7 @@ fi
 
 msg_info "Ensuring matching/review config"
 ensure_config_value "matching" "cleanup_enabled" "True" "$CONFIG_DIR/namer.cfg"
+ensure_config_value "Phash" "phash_match_distance" "4" "$CONFIG_DIR/namer.cfg"
 ensure_config_value "review" "review_database_enabled" "True" "$CONFIG_DIR/namer.cfg"
 ensure_config_value "review" "review_database_path" "/config/database/review.sqlite" "$CONFIG_DIR/namer.cfg"
 msg_ok "Ensured matching/review config"
