@@ -18,6 +18,7 @@ NAMER_SRC_DIR="${NAMER_SRC_DIR:-/opt/namer/src}"
 CONFIG_DIR="${CONFIG_DIR:-/opt/namer/config}"
 MEDIA_DIR="${MEDIA_DIR:-/namer}"
 NAMER_MEDIA_MOUNT="${NAMER_MEDIA_MOUNT:-/namer}"
+NAMER_TZ="${NAMER_TZ:-Europe/Berlin}"
 
 INFO_COLOR=$'\033[1;34m'
 OK_COLOR=$'\033[1;32m'
@@ -201,6 +202,8 @@ ExecStart=/usr/bin/docker run --name namer --pull ${DOCKER_PULL_POLICY} \
   -e PUID=${PUID} \
   -e PGID=${PGID} \
   -e UMASK=${UMASK} \
+  -e TZ=${NAMER_TZ} \
+  -v /etc/localtime:/etc/localtime:ro \
   -v ${CONFIG_DIR}:/config \
   -v ${MEDIA_DIR}:${NAMER_MEDIA_MOUNT} \
   ${NAMER_IMAGE}

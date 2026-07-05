@@ -47,6 +47,7 @@ NAMER_SOURCE_REF="${NAMER_SOURCE_REF:-codex/matching-cleanup-review-db}"
 NAMER_INSTALL_MODE="${NAMER_INSTALL_MODE_OVERRIDE:-image}"
 NAMER_IMAGE="${NAMER_IMAGE_OVERRIDE:-ghcr.io/nanja-at-web/namer:matching-cleanup-review-db}"
 NAMER_CONFIG_URL="${NAMER_CONFIG_URL:-https://raw.githubusercontent.com/${NAMER_SOURCE_REPO}/${NAMER_SOURCE_REF}/namer/namer.cfg.default}"
+NAMER_TZ="${NAMER_TZ:-Europe/Berlin}"
 PUID="${PUID:-99}"
 PGID="${PGID:-100}"
 UMASK="${UMASK:-000}"
@@ -243,6 +244,7 @@ echo_settings() {
   echo -e "${INFO} Using ${BL}$([[ "$CT_UNPRIVILEGED" == "1" ]] && echo "Unprivileged" || echo "Privileged")${CL} container"
   echo -e "${INFO} Using ${BL}${HOST_NAMER_PATH}${CL} as QNAP/NFS media mount"
   echo -e "${INFO} Installing ${BL}${NAMER_SOURCE_REPO}@${NAMER_SOURCE_REF}${CL}"
+  echo -e "${INFO} Using ${BL}${NAMER_TZ}${CL} as Namer Docker timezone"
   echo -e "${INFO} Logging to ${BL}${LOG_FILE}${CL}"
   echo
 }
@@ -322,6 +324,7 @@ build_container() {
     NAMER_SOURCE_REF="$NAMER_SOURCE_REF" \
     NAMER_IMAGE="$NAMER_IMAGE" \
     NAMER_CONFIG_URL="$NAMER_CONFIG_URL" \
+    NAMER_TZ="$NAMER_TZ" \
     PUID="$PUID" \
     PGID="$PGID" \
     UMASK="$UMASK" \

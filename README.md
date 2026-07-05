@@ -244,6 +244,7 @@ pct exec <CTID> -- journalctl -u namer -n 120 --no-pager
 | `NAMER_SOURCE_REF` | `codex/matching-cleanup-review-db` | Git branch or tag used in source mode |
 | `NAMER_IMAGE_OVERRIDE` | `ghcr.io/nanja-at-web/namer:matching-cleanup-review-db` | Docker image name to build or pull |
 | `NAMER_CONFIG_URL` | branch default config | URL used to create `/opt/namer/config/namer.cfg` |
+| `NAMER_TZ` | `Europe/Berlin` | Time zone passed to the Namer Docker container via `TZ`; `/etc/localtime` is mounted read-only |
 | `PUID` | `99` | Namer Docker PUID |
 | `PGID` | `100` | Namer Docker PGID |
 | `UMASK` | `000` | Namer Docker UMASK |
